@@ -592,7 +592,7 @@ const ACH=[
   {id:"a_win1m",ico:"🎆",name:"Big Win",desc:"Win 1M in one spin",c:s=>s.bestWin>=1e6},
   {id:"a_win1b",ico:"🎇",name:"Life-Changing",desc:"Win 1B in one spin",c:s=>s.bestWin>=1e9},
   {id:"a_time1h",ico:"⏰",name:"Dedicated",desc:"Play for 1 hour",c:s=>s.playtime>=3600},
-  {id:"a_end",ico:"♾️",name:"Infinite Jackpot",desc:"Beat the game",c:s=>s.totalEarned>=1e24},
+  {id:"a_end",ico:"♾️",name:"Infinite Jackpot",desc:"Beat the game",c:s=>s.totalEarned>=1e15},
 ];
 function achCount(){return Object.keys(S.ach).length;}
 function achMult(){return 1+achCount()*0.01;}
@@ -701,9 +701,10 @@ function waysCount(){return Math.pow(rowCount(),reelCount());}
 function evaluate(grid){
   const rc=grid.length,rows=grid[0].length,bet=currentBet();
   const mult=payMult()*(S.freeSpins>0?(S.freeMult||3):1);
-  // Cap a single spin to ~45s of idle income + 150x bet. Both are upgrade/bet-gated (NOT wealth-scaled),
-  // so wins can't compound your bankroll — progression comes from buying slot upgrades.
-  const cap=cps()*45+bet*150+8000;
+  // HARD GOVERNOR: a single spin pays at most ~coins^0.6. This makes growth provably POLYNOMIAL
+  // (coins ∝ t^2.5), so it can NEVER runaway exponentially regardless of bet/upgrade combos.
+  // Upgrades/bets just let you reliably reach this ceiling; they can't blow past it.
+  const cap=120*Math.pow(Math.max(1,S.coins),0.6)+1e4;
   let scat=0;grid.forEach(col=>col.forEach(s=>{if(s&&s.scatter)scat++;}));
   // sunset multiplier wilds — active during free spins
   let wildMult=1;
@@ -1149,11 +1150,10 @@ function renderStats(){const g=document.getElementById("statGrid");
 
 /* ============ goals / ending ============ */
 const GOALS=[
-  {amt:1e4,label:"First Big Win",done:false},{amt:1e6,label:"Millionaire",done:false},
-  {amt:1e8,label:"High Roller",done:false},{amt:1e10,label:"Casino Tycoon",done:false},
-  {amt:1e12,label:"Galactic Magnate",done:false},{amt:1e15,label:"Cosmic Mogul",done:false},
-  {amt:1e18,label:"Reality Owner",done:false},{amt:1e21,label:"Dimension Lord",done:false},
-  {amt:1e24,label:"THE INFINITE JACKPOT",done:false,ending:true},
+  {amt:1e4,label:"First Big Win",done:false},{amt:1e5,label:"Getting Hot",done:false},
+  {amt:1e6,label:"Millionaire",done:false},{amt:1e8,label:"High Roller",done:false},
+  {amt:1e10,label:"Casino Tycoon",done:false},{amt:1e12,label:"Galactic Magnate",done:false},
+  {amt:1e14,label:"Cosmic Mogul",done:false},{amt:1e15,label:"THE INFINITE JACKPOT",done:false,ending:true},
 ];
 let endingShown=false;
 function checkEnding(){for(const g of GOALS){if(!g.done&&S.totalEarned>=g.amt){g.done=true;
