@@ -100,6 +100,9 @@
   .marquee{font-family:'Orbitron';font-weight:900;letter-spacing:3px;font-size:13px;margin-bottom:12px;
     color:var(--gold);text-shadow:0 0 12px var(--gold),0 0 26px rgba(255,160,0,.5);text-transform:uppercase}
   .marquee b{color:var(--neon2);text-shadow:0 0 12px var(--neon2)}
+  .freebanner{margin:0 0 12px;padding:9px;border-radius:12px;font-family:'Orbitron';font-weight:800;font-size:13.5px;color:#06121a;
+    background:linear-gradient(90deg,var(--green),#11cc77,var(--green));background-size:200% 100%;
+    box-shadow:0 0 22px rgba(51,255,153,.55);animation:cashshine 2s linear infinite,pulse 1s infinite}
   .reels{display:flex;gap:7px;justify-content:center;margin:2px 0 14px;padding:10px;border-radius:14px;
     background:linear-gradient(180deg,#05030c,#130926);box-shadow:inset 0 4px 16px rgba(0,0,0,.8)}
   .reel{width:calc(var(--sh,104px) * .82);height:var(--sh,104px);border-radius:12px;overflow:hidden;
@@ -287,6 +290,7 @@
       <h2>Slot Machine <span style="font-size:11px;color:var(--dim)" id="reelInfo">3 reels</span></h2>
       <div class="machine">
         <div class="marquee">★ <b>JACKPOT</b> 7️⃣7️⃣7️⃣ ★ <span id="marqueeMsg">MEGA 🌌🌌🌌</span> ★</div>
+        <div id="freeBanner" class="freebanner" style="display:none"></div>
         <div class="reels" id="reels"></div>
         <div class="betrow">
           <span class="label">Bet:</span><span id="betChips"></span>
@@ -295,6 +299,10 @@
         <div class="autorow">
           <label class="toggle" id="autoToggle"><span class="switch" id="autoSwitch"></span> Auto-Spin</label>
           <span style="font-size:11px;color:var(--dim)" id="autoInfo"></span>
+        </div>
+        <div class="autorow">
+          <button class="btn alt sm" id="buyBonusBtn">🎁 BUY BONUS · <span id="bonusCost">—</span></button>
+          <span style="font-size:10.5px;color:var(--dim)">10 free spins · ×3 wins · 75× bet</span>
         </div>
         <div class="result" id="result">Press <kbd>SPACE</kbd> or click SPIN</div>
       </div>
@@ -372,7 +380,7 @@
 
 <script>
 "use strict";
-const VERSION="v2.2";
+const VERSION="v2.3";
 document.getElementById("ver").textContent=VERSION;
 
 /* ============ number formatting ============ */
@@ -397,6 +405,8 @@ const SYMBOLS=[
   {ch:"💎",name:"Diamond",weight:6, three:90,  two:6},
   {ch:"7️⃣",name:"Lucky 7",weight:3, three:300, two:0,jackpot:true},
   {ch:"🌌",name:"Galaxy", weight:1, three:2500,two:0,mega:true},
+  {ch:"🃏",name:"Wild",   weight:5, three:0,   two:0,wild:true},
+  {ch:"🎁",name:"Scatter",weight:6, three:0,   two:0,scatter:true},
 ];
 // dynamic bet ladder — grows with peak wealth
 let BETS=[10,50,250,1000,5000,25000];
@@ -418,7 +428,7 @@ function newGame(){return{
   betIdx:0,auto:false,chips:0,chipsBanked:0,goldenClicked:0,
   gens:{},ups:{},vips:{},ach:{},
   prestiges:0,started:Date.now(),savedAt:Date.now(),playtime:0,
-  jackpots:0,megas:0,
+  jackpots:0,megas:0,freeSpins:0,freeMult:1,bonusBuys:0,bonusTriggers:0,
 };}
 const S=newGame();
 const SET={sound:true,notation:"short",particles:true,golden:true};
@@ -534,6 +544,9 @@ const ACH=[
   {id:"a_p5",ico:"💠",name:"Whale",desc:"Prestige 5 times",c:s=>s.prestiges>=5},
   {id:"a_chip100",ico:"🔷",name:"Chip Stack",desc:"Own 100 VIP chips",c:s=>s.chips>=100},
   {id:"a_gold",ico:"✨",name:"Eagle Eye",desc:"Click a golden spin",c:s=>s.goldenClicked>=1},
+  {id:"a_bonus",ico:"🎁",name:"Bonus Time",desc:"Trigger a free-spins bonus",c:s=>(s.bonusTriggers||0)>=1},
+  {id:"a_buybonus",ico:"💳",name:"Pay to Win",desc:"Buy the bonus round",c:s=>(s.bonusBuys||0)>=1},
+  {id:"a_wild",ico:"🃏",name:"Going Wild",desc:"Win 1M+ during free spins",c:s=>(s.freeSpins>0&&s.bestWin>=1e6)||(s.bonusTriggers||0)>=5},
   {id:"a_gold25",ico:"🌟",name:"Sharpshooter",desc:"Click 25 golden spins",c:s=>s.goldenClicked>=25},
   {id:"a_win1m",ico:"🎆",name:"Big Win",desc:"Win 1M in one spin",c:s=>s.bestWin>=1e6},
   {id:"a_win1b",ico:"🎇",name:"Life-Changing",desc:"Win 1B in one spin",c:s=>s.bestWin>=1e9},
@@ -563,7 +576,7 @@ function cps(){let t=0;for(const g of GENS){const n=S.gens[g.id]||0;if(n>0)t+=n*
 /* ============ reel weights ============ */
 function weightedSymbols(){
   const l=luckPct()/100;
-  return SYMBOLS.map(s=>{let w=s.weight;const rb=s.three/3;w*=1+l*Math.log2(rb+1)*0.6;if(s.jackpot)w*=jackpotBoost();if(s.mega)w*=megaBoost();return{s,w};});
+  return SYMBOLS.map(s=>{let w=s.weight;const rb=(s.three||0)/3;w*=1+l*Math.log2(rb+1)*0.6;if(s.jackpot)w*=jackpotBoost();if(s.mega)w*=megaBoost();return{s,w};});
 }
 function pickSymbol(pool,tw){let r=Math.random()*tw;for(const e of pool){r-=e.w;if(r<=0)return e.s;}return pool[pool.length-1].s;}
 
@@ -605,40 +618,47 @@ function setStripFinal(el,sym){
 let spinning=false;
 function currentBet(){return BETS[S.betIdx];}
 function evaluate(finals){
-  const bet=currentBet(),mult=payMult(),rc=finals.length;
-  // Anti-runaway cap: a single spin can pay at most ~3 min of generator income (+ a bet-based floor for
-  // early game). This ties slot rewards to your REAL engine (generators) so no lucky spin wins the game.
+  const bet=currentBet(),rc=finals.length;
+  const mult=payMult()*(S.freeSpins>0?(S.freeMult||3):1); // free spins multiply all wins
+  // Anti-runaway cap: a single spin pays at most ~3 min of generator income (+bet floor early game).
   const cap=cps()*180+bet*120+1000;
   const cp=p=>Math.min(p,cap);
-  const counts=new Map();let best=null,bestN=0;
-  for(const s of finals){const n=(counts.get(s)||0)+1;counts.set(s,n);if(n>bestN){bestN=n;best=s;}}
-  // full line
-  if(bestN===rc){const bonus=rc===3?1:rc===4?1.8:3.2;
-    const payout=cp(best.three*bet*mult*bonus);
-    let kind=best.mega?"mega":best.jackpot?"jackpot":(best.three>=30?"big":"win");
-    return{payout,kind,label:`${best.name} ×${rc}!`,win:[...Array(rc).keys()]};}
-  // near miss (rc-1)
-  if(bestN===rc-1 && rc>=4){const v=best.two>0?best.two:best.three*0.05;
-    return{payout:cp(v*bet*mult*(rc===5?2:1.3)),kind:"win",label:`${best.name} ×${bestN}`,win:idxOf(finals,best)};}
-  // pair on 3 reels
-  if(rc===3 && bestN===2 && best.two>0){return{payout:cp(best.two*bet*mult),kind:"win",label:`${best.name} pair`,win:idxOf(finals,best)};}
-  // small pair on 4/5
-  if(bestN===2 && best.two>0 && rc>=4){return{payout:cp(best.two*bet*mult*0.4),kind:"win",label:`${best.name} pair`,win:idxOf(finals,best)};}
-  return{payout:0,kind:"lose",label:"No win",win:[]};
+  const scat=finals.filter(s=>s.scatter).length;     // scatters → bonus trigger
+  const wild=finals.filter(s=>s.wild).length;         // wilds substitute for any symbol
+  const core=finals.filter(s=>!s.wild&&!s.scatter);
+  // best line symbol, counting wilds as matches (multiway feel)
+  let best=null,bestN=0;
+  [...new Set(core)].forEach(s=>{const c=core.filter(x=>x===s).length+wild;
+    if(c>bestN||(c===bestN&&best&&s.three>best.three)){bestN=c;best=s;}});
+  if(!best&&wild>=2){best=SYMBOLS.find(s=>s.mega);bestN=wild;} // all-wild line → top symbol
+  const out={payout:0,kind:"lose",label:"No win",win:[],bonus:scat>=3,scatters:scat};
+  if(best){
+    const winIdx=[];finals.forEach((s,i)=>{if(s===best||s.wild)winIdx.push(i);});
+    const wmult=wild>0?1+wild*0.5:1;                  // each wild boosts the win
+    const tag=wild>0?` +${wild}🃏`:"";
+    if(bestN>=rc){const rb=rc===3?1:rc===4?1.8:rc===5?3.2:5;
+      out.payout=cp(best.three*bet*mult*rb*wmult);out.win=winIdx;
+      out.kind=best.mega?"mega":best.jackpot?"jackpot":(best.three>=30?"big":"win");out.label=`${best.name} ×${rc}!${tag}`;}
+    else if(bestN===rc-1&&rc>=4&&best.two>0){out.payout=cp(best.two*bet*mult*(rc===5?2:1.3)*wmult);out.win=winIdx;out.kind="win";out.label=`${best.name} ×${bestN}${tag}`;}
+    else if(rc===3&&bestN===2&&best.two>0){out.payout=cp(best.two*bet*mult*wmult);out.win=winIdx;out.kind="win";out.label=`${best.name} pair${tag}`;}
+    else if(bestN===2&&best.two>0&&rc>=4){out.payout=cp(best.two*bet*mult*0.4*wmult);out.win=winIdx;out.kind="win";out.label=`${best.name} pair${tag}`;}
+  }
+  return out;
 }
 function idxOf(arr,sym){const r=[];arr.forEach((s,i)=>{if(s===sym)r.push(i);});return r;}
 
 async function spin(manual){
   if(spinning)return false;
+  const free=S.freeSpins>0;
   const bet=currentBet();
-  if(S.coins<bet){if(manual){flashResult("Not enough coins!","");beep(160,0.08);sfx("lose",0.35);}return false;}
-  spinning=true;S.coins-=bet;S.spins++;if(manual)S.manualSpins++;else S.autoSpins++;
+  if(!free&&S.coins<bet){if(manual){flashResult("Not enough coins!","");beep(160,0.08);sfx("lose",0.35);}return false;}
+  spinning=true;if(!free)S.coins-=bet;S.spins++;if(manual&&!free)S.manualSpins++;else S.autoSpins++;
   const btn=document.getElementById("spinBtn");btn.disabled=true;
   document.querySelectorAll(".reel").forEach(r=>r.classList.remove("win"));
   const pool=weightedSymbols();const tw=pool.reduce((a,e)=>a+e.w,0);
   const rc=reelCount();const finals=[];for(let i=0;i<rc;i++)finals.push(pickSymbol(pool,tw));
-  const dur=manual?620:Math.min(360,autoInterval()*0.55);
-  beep(330,0.03);if(manual)sfx("spin",0.35);
+  const dur=(manual&&!free)?620:Math.min(360,autoInterval()*0.55);
+  beep(330,0.03);if(manual&&!free)sfx("spin",0.35);
   await animateReels(finals,dur);
   const res=evaluate(finals);
   if(res.payout>0){
@@ -651,12 +671,44 @@ async function spin(manual){
     else if(res.kind==="jackpot"){beep(660,0.35,"square");sfx("jackpot",0.75);bigConfetti();}
     else if(res.kind==="big"){beep(520,0.18);sfx("win",0.5);sfx("coin",0.4);}
     else{beep(440,0.08);sfx("coin",0.4);}
-  }else if(manual){flashResult("— "+res.label+" —","");}
+  }else if(manual&&!free){flashResult("— "+res.label+" —","");}
   // lucky streak consume
   if(buffs.lucky){buffs.lucky.left--;if(buffs.lucky.left<=0)delete buffs.lucky;}
+  // free spin accounting + bonus trigger
+  if(free)S.freeSpins=Math.max(0,S.freeSpins-1);
+  if(res.bonus)triggerFreeSpins(res.scatters);
+  renderBonusBanner();
   spinning=false;btn.disabled=false;
   updateUI();checkAchievements();checkEnding();
   return true;
+}
+/* ---- bonus / free spins ---- */
+let freeTimer=null;
+function triggerFreeSpins(scat){
+  const award=8+Math.max(0,(scat||3)-3)*4;
+  const fresh=!freeTimer;
+  S.freeSpins=(S.freeSpins||0)+award;S.freeMult=3;S.bonusTriggers=(S.bonusTriggers||0)+1;
+  toast("🎁","FREE SPINS!",award+" spins · all wins ×3");pushNews("🎁 BONUS! "+award+" free spins won!");
+  beep(720,0.3,"square");sfx("jackpot",0.7);bigConfetti();renderBonusBanner();
+  if(fresh)freeTimer=setTimeout(pumpFreeSpins,650);
+}
+function pumpFreeSpins(){
+  if(S.freeSpins>0){if(!spinning)spin(false);freeTimer=setTimeout(pumpFreeSpins,Math.max(480,autoInterval()));}
+  else{freeTimer=null;S.freeMult=1;renderBonusBanner();flashResult("✦ Bonus complete ✦","win");}
+}
+function buyBonus(){
+  if(S.freeSpins>0){flashResult("Bonus already running!","");return;}
+  const cost=currentBet()*75;
+  if(S.coins<cost){flashResult("Need "+fmt(cost)+" coins to buy the bonus!","");beep(160,0.08);sfx("lose",0.3);return;}
+  S.coins-=cost;S.bonusBuys=(S.bonusBuys||0)+1;
+  toast("💰","BONUS BOUGHT!","10 free spins · all wins ×3");sfx("mega",0.7);bigConfetti();
+  S.freeSpins=(S.freeSpins||0)+10;S.freeMult=3;renderBonusBanner();updateStats();
+  if(!freeTimer)freeTimer=setTimeout(pumpFreeSpins,500);
+}
+function renderBonusBanner(){
+  const m=document.getElementById("freeBanner"),b=document.getElementById("buyBonusBtn");
+  if(m){if(S.freeSpins>0){m.style.display="block";m.textContent=`🎁 FREE SPINS: ${S.freeSpins} left · ALL WINS ×${S.freeMult||3}`;}else m.style.display="none";}
+  if(b)b.disabled=S.freeSpins>0;
 }
 function animateReels(finals,dur){
   return new Promise(res=>{
@@ -756,6 +808,7 @@ function updateStats(){
   document.getElementById("luck").textContent=Math.round(luckPct())+"%";
   document.getElementById("globalMult").textContent="×"+globalMult().toFixed(2);
   document.getElementById("spinCost").textContent=fmt(currentBet());
+  const bc=document.getElementById("bonusCost");if(bc)bc.textContent=fmt(currentBet()*75);
   const goal=GOALS.find(g=>!g.done);
   if(goal){document.getElementById("goalText").textContent=`Next: ${goal.label} — ${fmt(S.totalEarned)} / ${fmt(goal.amt)}`;
     document.getElementById("goalBar").style.width=Math.min(100,S.totalEarned/goal.amt*100)+"%";}
@@ -800,11 +853,14 @@ function renderUps(){const list=document.getElementById("upList");list.innerHTML
   refreshAfford();}
 function renderPaytable(){const pt=document.getElementById("paytable");pt.innerHTML="";const rc=reelCount();const bonus=rc===3?1:rc===4?2.5:6;
   SYMBOLS.forEach((s,i)=>{const el=document.createElement("div");el.className="ptrow";
-    const rar=s.mega?"r3":s.jackpot?"r2":(i>=3?"r1":"");
+    const rar=s.mega||s.scatter?"r3":s.jackpot||s.wild?"r2":(i>=3?"r1":"");
     const toks=Array.from({length:Math.min(rc,3)},()=>`<div class="tok ${rar}">${s.ch}</div>`).join("");
-    const two=s.two>0?`Full line · pair pays ×${s.two}`:"Full line only";
-    const tag=s.jackpot?'<span class="ptag j">JACKPOT</span>':s.mega?'<span class="ptag m">MEGA</span>':"";
-    el.innerHTML=`<div class="syms">${toks}</div><div><div class="pn">${s.name} ${tag}</div><div class="pd">${two}</div></div><div class="pay">×${fmt(s.three*bonus)}</div>`;
+    let nameTag,desc,pay;
+    if(s.wild){nameTag=`${s.name} <span class="ptag m">WILD</span>`;desc="Substitutes for any symbol · boosts wins";pay="★";}
+    else if(s.scatter){nameTag=`${s.name} <span class="ptag j">BONUS</span>`;desc="Land 3+ anywhere → FREE SPINS ×3";pay="★";}
+    else{const tag=s.jackpot?'<span class="ptag j">JACKPOT</span>':s.mega?'<span class="ptag m">MEGA</span>':"";
+      nameTag=`${s.name} ${tag}`;desc=s.two>0?`Full line · pair pays ×${s.two}`:"Full line only";pay="×"+fmt(s.three*bonus);}
+    el.innerHTML=`<div class="syms">${toks}</div><div><div class="pn">${nameTag}</div><div class="pd">${desc}</div></div><div class="pay">${pay}</div>`;
     pt.appendChild(el);});}
 function renderBets(){const w=document.getElementById("betChips");w.innerHTML="";
   BETS.forEach((b,i)=>{const c=document.createElement("button");c.className="chip"+(i===S.betIdx?" active":"")+(S.coins<b?" cant":"");c.textContent=fmt(b);
@@ -929,9 +985,11 @@ document.getElementById("importBtn").onclick=()=>openModal("Import Save",`<p>Pas
 
 /* ============ input ============ */
 document.getElementById("spinBtn").onclick=()=>spin(true);
+document.getElementById("buyBonusBtn").onclick=buyBonus;
 window.addEventListener("keydown",e=>{if(e.target.tagName==="TEXTAREA")return;
   if(e.code==="Space"){e.preventDefault();spin(true);}
   else if(e.key.toLowerCase()==="a"){S.auto=!S.auto;renderAuto();setupAuto();}
+  else if(e.key.toLowerCase()==="b"){buyBonus();}
   else if(e.key.toLowerCase()==="m"){maxAffordableBet();}
   else if(e.key>="1"&&e.key<="6"){const i=+e.key-1;if(i<BETS.length){S.betIdx=i;renderBets();updateStats();}}});
 
@@ -955,7 +1013,8 @@ window.addEventListener("beforeunload",()=>logProgress("unload"));
 if(location.search.indexOf("reset")>=0){try{localStorage.removeItem(KEY);localStorage.removeItem(SKEY);}catch(e){}history.replaceState(null,"",location.pathname);}
 function updateUI(){renderGens();if(curTab==="up")renderUps();if(curTab==="vip")renderVip();if(curTab==="stats")renderStats();updateStats();}
 function fullRender(){renderBets();renderGens();renderUps();renderPaytable();renderVip();renderAch();renderAuto();renderStats();updateStats();setupAuto();renderBuffs();}
-load();renderMachine();fullRender();pushNews(NEWS[0]);
+load();renderMachine();fullRender();renderBonusBanner();pushNews(NEWS[0]);
+if(S.freeSpins>0){S.freeMult=S.freeMult||3;if(!freeTimer)freeTimer=setTimeout(pumpFreeSpins,900);}
 if(pendingOffline){const o=pendingOffline;S.coins+=o.earned;S.totalEarned+=o.earned;S.runEarned+=o.earned;
   setTimeout(()=>openModal("👋 Welcome Back!",`<p>While you were away for <b style="color:var(--gold)">${fmtTime(o.away)}</b>, your casinos earned <b style="color:var(--green)">${fmt(o.earned)} coins</b>.</p><p style="color:var(--dim)">(Offline earnings pay 50% of your full rate, capped at 8 hours.)</p>`,[{label:"Collect 💰",cls:"alt",fn:()=>{spawnFloat(o.earned);closeModal();}}]),500);}
 </script>
