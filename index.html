@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎰</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Chakra+Petch:wght@500;600;700&family=Audiowide&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Chakra+Petch:wght@500;600;700&family=Audiowide&family=Bungee&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#08050f; --panel:#160a26; --panel2:#1f0f38; --panel3:#2a1450;
@@ -64,7 +64,7 @@
   .stat:hover{transform:translateY(-2px);border-color:var(--neon2)}
   .stat::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--neon),transparent);opacity:.5}
   .stat .label{font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:1.2px}
-  .stat .val{font-size:clamp(16px,2.4vw,24px);font-weight:900;color:var(--gold);text-shadow:0 0 14px rgba(255,210,63,.45);margin-top:3px}
+  .stat .val{font-size:clamp(16px,2.4vw,24px);font-weight:900;color:var(--gold);text-shadow:0 0 14px rgba(255,210,63,.45);margin-top:3px;font-variant-numeric:tabular-nums}
   .stat .val.cps{color:var(--green);text-shadow:0 0 14px rgba(51,255,153,.4)}
   .stat .val.chips{color:var(--neon2);text-shadow:0 0 14px rgba(0,229,255,.4)}
   .stat .val.dim{color:var(--text)}.stat .val.neon{color:var(--neon);text-shadow:0 0 14px rgba(255,43,214,.45)}
@@ -142,7 +142,7 @@
   .result{min-height:28px;margin-top:11px;font-weight:800;font-size:17px}
   .result.win{color:var(--gold);text-shadow:0 0 16px rgba(255,210,63,.6)}
   .result.big{color:var(--green);animation:pop .4s}
-  .result.jackpot{color:var(--neon);font-size:22px;animation:shake .5s}
+  .result.jackpot{color:var(--neon);font-size:23px;font-family:'Bungee','Orbitron',cursive;animation:shake .5s;font-variant-numeric:tabular-nums}
   @keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
   @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px) rotate(-2deg)}40%{transform:translateX(8px) rotate(2deg)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
 
@@ -460,7 +460,7 @@ function newGame(){return{
   stars:0,starsBanked:0,totalChipsEarned:0,ascensions:0,asc:{},
 };}
 const S=newGame();
-const SET={sound:true,notation:"short",particles:true,golden:true};
+const SET={sound:true,notation:"short",particles:true,golden:true,music:false};
 let devRows=0; // ?rows=N preview override
 
 /* ============ generators ============ */
@@ -870,25 +870,38 @@ function spinWheel(){
     wheelSpinning=false;
   },5200);
 }
+// reel spin: motion-blur keyed to velocity + overshoot-and-settle "clunk" (Web Animations API, GPU-cheap)
 function animateReels(grid,dur,antic){
   return new Promise(res=>{
     const rows=grid[0].length,last=grid.length-1;
+    const startY=-(STRIP_LEN*SH), finalY=-((STRIP_LEN-rows)*SH);
+    const over=finalY-Math.min(16,SH*0.16); // overshoot past the stop, then settle back
+    let maxT=0;
     grid.forEach((col,i)=>{const el=strips[i];if(!el)return;setStripFinalCol(el,col);
-      el.style.transition="none";el.style.transform=`translateY(${-(STRIP_LEN*SH)}px)`;void el.offsetHeight;
-      let d=dur+i*110;if(antic&&i===last)d+=900; // anticipation: last reel spins longer
-      el.style.transition=`transform ${d}ms cubic-bezier(.18,.7,.2,1)`;
-      el.style.transform=`translateY(${-((STRIP_LEN-rows)*SH)}px)`;});
+      const d=dur+i*120+((antic&&i===last)?900:0); maxT=Math.max(maxT,d);
+      el.style.transform=`translateY(${finalY}px)`; // resting fallback
+      el.animate([
+        {transform:`translateY(${startY}px)`,filter:'blur(0px)'},
+        {transform:`translateY(${(startY+finalY)/2}px)`,filter:'blur(7px)',offset:.5},
+        {transform:`translateY(${over}px)`,filter:'blur(2px)',offset:.9},
+        {transform:`translateY(${finalY}px)`,filter:'blur(0px)'}
+      ],{duration:d,easing:'cubic-bezier(.22,.61,.36,1)',fill:'forwards'});
+    });
     const lastReel=document.getElementById("reel"+last);if(antic&&lastReel)lastReel.classList.add("antic");
-    setTimeout(()=>{if(lastReel)lastReel.classList.remove("antic");res();},dur+last*110+(antic?900:0)+30);
+    setTimeout(()=>{if(lastReel)lastReel.classList.remove("antic");res();},maxT+40);
   });
 }
+// eased count-up for win numbers (research: never linear; tabular-nums prevents wobble)
+function countUp(el,to,ms){const t0=performance.now(),ease=x=>1-Math.pow(1-x,3);
+  (function f(now){const p=Math.min(1,(now-t0)/(ms||800));el.textContent=fmt(to*ease(p));if(p<1)requestAnimationFrame(f);})(t0);}
 function flashResult(t,c){const r=document.getElementById("result");r.className="result "+c;r.textContent=t;}
-function showWin(res){const r=document.getElementById("result");let cls="win",txt="";
-  if(res.kind==="mega"){cls="jackpot";txt=`🐃 BUFFALO!! +${fmt(res.payout)} 🐃`;pushNews("🐃 BUFFALO MEGA JACKPOT!");toast("🐃","BUFFALO!!","+"+fmt(res.payout)+" coins");}
-  else if(res.kind==="jackpot"){cls="jackpot";txt=`7️⃣ JACKPOT! +${fmt(res.payout)}`;pushNews("7️⃣ Lucky 7s — jackpot!");}
-  else if(res.kind==="big"){cls="big";txt=`${res.label}  +${fmt(res.payout)}`;}
-  else{cls="win";txt=`${res.label}  +${fmt(res.payout)}`;}
-  r.className="result "+cls;r.textContent=txt;}
+function showWin(res){const r=document.getElementById("result");let cls="win",pre="";
+  if(res.kind==="mega"){cls="jackpot";pre="🐃 BUFFALO!! +";pushNews("🐃 BUFFALO MEGA JACKPOT!");toast("🐃","BUFFALO!!","+"+fmt(res.payout)+" coins");}
+  else if(res.kind==="jackpot"){cls="jackpot";pre="7️⃣ JACKPOT! +";pushNews("7️⃣ Lucky 7s — jackpot!");}
+  else if(res.kind==="big"){cls="big";pre=res.label+"  +";}
+  else{r.className="result win";r.textContent=`${res.label}  +${fmt(res.payout)}`;return;}
+  r.className="result "+cls;r.innerHTML=pre+'<span id="winAmt">0</span>'; // count-up the big numbers
+  const span=document.getElementById("winAmt");if(span)countUp(span,res.payout,700);}
 function spawnFloat(a){if(!SET.particles)return;const b=document.getElementById("spinBtn").getBoundingClientRect();
   const f=document.createElement("div");f.className="float";f.textContent="+"+fmt(a);
   f.style.left=(b.left+b.width/2-20+(Math.random()*40-20))+"px";f.style.top=(b.top-10)+"px";
@@ -919,6 +932,12 @@ function unlockSfx(){if(_sfxUnlocked)return;_sfxUnlocked=true;
   Object.keys(SFX).forEach(k=>{try{const a=new Audio(SFX_BASE+SFX[k]+".wav");a.preload="auto";a.load();_sfxCache[k]=a;}catch(e){}});}
 window.addEventListener("pointerdown",unlockSfx,{once:true});
 window.addEventListener("keydown",unlockSfx,{once:true});
+// CC0 background music (FreePD, public domain) — off by default, starts on first gesture if enabled
+let bgm=null;
+function updateMusic(){if(!SET.music){if(bgm)bgm.pause();return;}
+  if(!bgm){try{bgm=new Audio("https://cdn.jsdelivr.net/gh/SoundSafari/CC0-1.0-Music@master/freepd.com/A%20Good%20Bass%20for%20Gambling.mp3");bgm.loop=true;bgm.volume=0.22;}catch(e){}}
+  if(bgm)bgm.play().catch(()=>{});}
+window.addEventListener("pointerdown",()=>{if(SET.music)updateMusic();},{once:true});
 
 /* ============ idle loop ============ */
 let lastTick=Date.now();
@@ -1127,13 +1146,15 @@ document.getElementById("prestigeBtn").onclick=doPrestige;
 function openSettings(){const seg=(cur,opts)=>opts.map(o=>`<button data-v="${o.v}" class="${cur===o.v?'on':''}">${o.t}</button>`).join("");
   openModal("⚙️ Settings",`
    <div class="setline"><span>Sound effects</span><div class="seg" id="set-sound">${seg(SET.sound,[{v:true,t:"On"},{v:false,t:"Off"}])}</div></div>
+   <div class="setline"><span>Background music</span><div class="seg" id="set-music">${seg(SET.music,[{v:true,t:"On"},{v:false,t:"Off"}])}</div></div>
    <div class="setline"><span>Win particles</span><div class="seg" id="set-particles">${seg(SET.particles,[{v:true,t:"On"},{v:false,t:"Off"}])}</div></div>
    <div class="setline"><span>Golden spins</span><div class="seg" id="set-golden">${seg(SET.golden,[{v:true,t:"On"},{v:false,t:"Off"}])}</div></div>
    <div class="setline"><span>Number format</span><div class="seg" id="set-notation">${seg(SET.notation,[{v:"short",t:"1.23M"},{v:"sci",t:"1.23e6"}])}</div></div>
    <p style="color:var(--dim);font-size:12px;margin-top:10px">Auto-saves every 8s to this browser. ${VERSION}</p>`,
    [{label:"Done",cls:"alt",fn:()=>{saveSettings();closeModal();}}]);
   const bind=(id,key,parse)=>{document.querySelectorAll("#"+id+" button").forEach(b=>b.onclick=()=>{SET[key]=parse(b.getAttribute("data-v"));document.querySelectorAll("#"+id+" button").forEach(x=>x.classList.remove("on"));b.classList.add("on");updateStats();});};
-  bind("set-sound","sound",v=>v==="true");bind("set-particles","particles",v=>v==="true");bind("set-golden","golden",v=>v==="true");bind("set-notation","notation",v=>v);}
+  bind("set-sound","sound",v=>v==="true");bind("set-music","music",v=>v==="true");bind("set-particles","particles",v=>v==="true");bind("set-golden","golden",v=>v==="true");bind("set-notation","notation",v=>v);
+  document.querySelectorAll("#set-music button").forEach(b=>b.addEventListener("click",updateMusic));}
 document.getElementById("gearBtn").onclick=openSettings;document.getElementById("settingsBtn").onclick=openSettings;
 
 /* ============ save / load ============ */
