@@ -29,6 +29,9 @@
     animation:bgdrift 24s linear infinite;
   }
   @keyframes bgdrift{from{background-position:0 0,0 0,0 0,0 0,0 0}to{background-position:0 0,0 0,0 0,0 42px,42px 0}}
+  /* film-grain texture overlay for depth (inline SVG noise, no asset request) */
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;mix-blend-mode:overlay;opacity:.06;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
   h1,h2,h3{font-weight:900;letter-spacing:.5px}
   h1,.stat .val,.btn,.modal h2,.buff{font-family:'Orbitron','Rajdhani',sans-serif}
   header h1,.marquee{font-family:'Audiowide','Orbitron',sans-serif}
@@ -215,6 +218,22 @@
   kbd{background:#2a1450;border:1px solid #5a2c8a;border-radius:5px;padding:1px 6px;font-size:11px}
   .ver{color:#5a4080;font-size:11px}
 
+  /* ---- clean paytable ---- */
+  .ptrow{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;
+    background:linear-gradient(90deg,rgba(30,14,56,.6),rgba(20,9,36,.5));border:1px solid var(--line);border-radius:13px;padding:7px 12px;transition:.12s}
+  .ptrow:hover{border-color:#5a2c8a;background:linear-gradient(90deg,rgba(42,20,76,.7),rgba(26,12,46,.6))}
+  .ptrow .syms{display:flex;gap:3px;flex:0 0 auto}
+  .tok{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:19px;
+    background:radial-gradient(circle at 50% 35%,#33195e,#140a26);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),0 2px 5px rgba(0,0,0,.5)}
+  .tok.r1{box-shadow:inset 0 0 0 1px rgba(255,210,63,.5),0 0 10px rgba(255,210,63,.35)}
+  .tok.r2{box-shadow:inset 0 0 0 1px var(--neon),0 0 12px rgba(255,43,214,.5)}
+  .tok.r3{box-shadow:inset 0 0 0 1px var(--neon2),0 0 14px rgba(0,229,255,.55)}
+  .ptrow .pn{font-weight:700;font-size:14px;font-family:'Chakra Petch';display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .ptrow .ptag{font-size:9.5px;font-weight:800;letter-spacing:1px;padding:2px 7px;border-radius:20px;font-family:'Orbitron'}
+  .ptag.j{color:#190a2a;background:var(--neon)}.ptag.m{color:#06121a;background:var(--neon2)}
+  .ptrow .pd{font-size:11px;color:var(--dim);margin-top:1px}
+  .ptrow .pay{font-family:'Orbitron';font-weight:800;color:var(--gold);font-size:15px;text-shadow:0 0 10px rgba(255,210,63,.4)}
+
   /* ---- unique cosmic prestige UI ---- */
   #tab-vip{position:relative}
   .vhero{position:relative;border-radius:18px;overflow:hidden;padding:18px 16px;margin-bottom:14px;text-align:center;
@@ -353,7 +372,7 @@
 
 <script>
 "use strict";
-const VERSION="v2.0";
+const VERSION="v2.2";
 document.getElementById("ver").textContent=VERSION;
 
 /* ============ number formatting ============ */
@@ -385,8 +404,10 @@ function niceBets(peak){const mant=[1,2.5,5];const out=[];
   for(let e=1;e<=20;e++)for(const m of mant){const v=Math.round(m*Math.pow(10,e));if(v<=Math.max(250,peak))out.push(v);}
   if(!out.length)out.push(10);return out.slice(-6);}
 function maybeRefreshBets(){
-  S.peakCoins=Math.max(S.peakCoins||0,S.coins);
-  const nb=niceBets(S.peakCoins);
+  // ladder tracks CURRENT bankroll — scales down when unlucky, up when winning (smoothed to avoid jitter)
+  S.betScale=S.betScale||S.coins||250;
+  S.betScale+=(S.coins-S.betScale)*0.15; // ease toward current coins
+  const nb=niceBets(Math.max(250,Math.min(S.coins*1.05,S.betScale)));
   if(nb.length!==BETS.length||nb.some((v,i)=>v!==BETS[i])){BETS=nb;if(S.betIdx>=BETS.length)S.betIdx=BETS.length-1;renderBets();}
 }
 
@@ -417,8 +438,16 @@ const GENS=[
   {id:"hole",  ico:"🕳️",name:"Black Hole Bank", base:4.8e12,cps:1.35e9},
   {id:"multi", ico:"🪐",name:"Multiverse Mint", base:1.05e14,cps:1.3e10},
   {id:"deity", ico:"👁️",name:"Luck Deity",      base:2.5e15,cps:1.45e11},
+  {id:"quantum",ico:"⚛️",name:"Quantum Casino",  base:6e16,  cps:1.4e12},
+  {id:"dimen", ico:"🌀",name:"Dimension Den",    base:1.4e18,cps:1.3e13},
+  {id:"cartel",ico:"💠",name:"Cosmic Cartel",    base:3.3e19,cps:1.25e14},
+  {id:"engine",ico:"🛠️",name:"Infinity Engine",  base:8e20,  cps:1.2e15},
+  {id:"realm", ico:"🔮",name:"Reality Mint",     base:2e22,  cps:1.15e16},
+  {id:"omega", ico:"🎴",name:"Omega Jackpot",    base:5e23,  cps:1.1e17},
+  {id:"singul",ico:"🕛",name:"The Singularity",  base:1.3e25,cps:1.05e18},
+  {id:"god",   ico:"🌞",name:"Casino Godhead",   base:3.5e26,cps:1e19},
 ];
-function genCost(g,o){return Math.ceil(g.base*Math.pow(1.15,o));}
+function genCost(g,o){return Math.ceil(g.base*Math.pow(1.16,o));}
 function genCostN(g,o,n){let c=0;for(let i=0;i<n;i++)c+=genCost(g,o+i);return c;}
 function maxBuy(g,o,coins){let n=0,c=0;while(true){const x=genCost(g,o+n);if(c+x>coins)break;c+=x;n++;if(n>1e5)break;}return{n,cost:c};}
 
@@ -432,27 +461,32 @@ const UP=[
   {id:"u_bot",ico:"🔧",name:"Overclocked Bots",cost:60000,desc:"Slot Bots ×3",req:s=>(s.gens.bot||0)>=10,eff:{gen:"bot",mult:3}},
   {id:"u_luck2",ico:"🍀",name:"Rabbit's Foot",cost:120000,desc:"+10% Luck",req:s=>(s.gens.lounge||0)>=5,eff:{luck:10}},
   {id:"u_reel4",ico:"🎟️",name:"Fourth Reel",cost:250000,desc:"Add a 4th reel — bigger lines!",req:s=>s.spins>=120,eff:{reels:4}},
-  {id:"u_all1",ico:"📈",name:"Loyalty Program",cost:500000,desc:"ALL generators ×1.5",req:s=>s.spins>=160,eff:{gen:"all",mult:1.5}},
+  {id:"u_all1",ico:"📈",name:"Loyalty Program",cost:500000,desc:"ALL generators ×1.4",req:s=>s.spins>=160,eff:{gen:"all",mult:1.4}},
   {id:"u_lounge",ico:"🥂",name:"Bottomless Bar",cost:900000,desc:"VIP Lounges ×3",req:s=>(s.gens.lounge||0)>=25,eff:{gen:"lounge",mult:3}},
   {id:"u_jack",ico:"7️⃣",name:"Rigged in Your Favor",cost:1.2e6,desc:"Lucky 7s 2× as common",req:s=>(s.gens.floor||0)>=10,eff:{jackpot:2}},
   {id:"u_auto2",ico:"⚡",name:"Quantum Lever",cost:4e6,desc:"Auto-spin 40% faster",req:s=>!!s.ups.u_auto1,eff:{autoSpeed:0.6}},
   {id:"u_floor",ico:"🎲",name:"Loose Machines",cost:7e6,desc:"Casino Floors ×3",req:s=>(s.gens.floor||0)>=25,eff:{gen:"floor",mult:3}},
   {id:"u_pay3",ico:"💎",name:"Diamond Reels",cost:1.5e7,desc:"Spin payouts ×3",req:s=>s.spins>=400,eff:{payMult:3}},
   {id:"u_reel5",ico:"🎟️",name:"Fifth Reel",cost:4e7,desc:"Add a 5th reel — massive lines!",req:s=>!!s.ups.u_reel4&&s.spins>=500,eff:{reels:5}},
-  {id:"u_all2",ico:"📈",name:"Monopoly",cost:8e7,desc:"ALL generators ×2",req:s=>(s.gens.online||0)>=10,eff:{gen:"all",mult:2}},
+  {id:"u_all2",ico:"📈",name:"Monopoly",cost:8e7,desc:"ALL generators ×1.6",req:s=>(s.gens.online||0)>=10,eff:{gen:"all",mult:1.6}},
   {id:"u_online",ico:"📡",name:"Viral Marketing",cost:3e8,desc:"Online Casinos ×3",req:s=>(s.gens.online||0)>=25,eff:{gen:"online",mult:3}},
   {id:"u_luck3",ico:"🌟",name:"Pact with Fortune",cost:5e8,desc:"+12% Luck",req:s=>(s.gens.vault||0)>=5,eff:{luck:12}},
   {id:"u_vault",ico:"💵",name:"Compound Interest",cost:2e9,desc:"The Vaults ×3",req:s=>(s.gens.vault||0)>=25,eff:{gen:"vault",mult:3}},
-  {id:"u_all3",ico:"🚀",name:"Hostile Takeover",cost:1e10,desc:"ALL generators ×3",req:s=>(s.gens.city||0)>=10,eff:{gen:"all",mult:3}},
+  {id:"u_all3",ico:"🚀",name:"Hostile Takeover",cost:1e10,desc:"ALL generators ×1.8",req:s=>(s.gens.city||0)>=10,eff:{gen:"all",mult:1.8}},
   {id:"u_city",ico:"🏙️",name:"Urban Sprawl",cost:6e10,desc:"Casino Cities ×3",req:s=>(s.gens.city||0)>=25,eff:{gen:"city",mult:3}},
   {id:"u_luck4",ico:"🔆",name:"Blessed Reels",cost:3e11,desc:"+15% Luck",req:s=>(s.gens.orbit||0)>=5,eff:{luck:15}},
   {id:"u_mega",ico:"🌌",name:"Cosmic Alignment",cost:5e11,desc:"Galaxy symbols 3× as common",req:s=>(s.gens.orbit||0)>=10,eff:{megaUp:3}},
   {id:"u_orbit",ico:"🚀",name:"Zero-G Spins",cost:2e12,desc:"Orbital Casinos ×3",req:s=>(s.gens.orbit||0)>=25,eff:{gen:"orbit",mult:3}},
-  {id:"u_all4",ico:"♾️",name:"Universal Franchise",cost:2e13,desc:"ALL generators ×3",req:s=>(s.gens.galaxy||0)>=10,eff:{gen:"all",mult:3}},
+  {id:"u_all4",ico:"♾️",name:"Universal Franchise",cost:2e13,desc:"ALL generators ×2",req:s=>(s.gens.galaxy||0)>=10,eff:{gen:"all",mult:2}},
   {id:"u_pay4",ico:"👑",name:"Royal Flush Reels",cost:1e14,desc:"Spin payouts ×4",req:s=>s.spins>=1200,eff:{payMult:4}},
-  {id:"u_all5",ico:"🌠",name:"Cosmic Empire",cost:5e15,desc:"ALL generators ×4",req:s=>(s.gens.nebula||0)>=10,eff:{gen:"all",mult:4}},
+  {id:"u_all5",ico:"🌠",name:"Cosmic Empire",cost:5e15,desc:"ALL generators ×2.2",req:s=>(s.gens.nebula||0)>=10,eff:{gen:"all",mult:2.2}},
   {id:"u_luck5",ico:"👁️",name:"Eye of Fortune",cost:1e17,desc:"+25% Luck",req:s=>(s.gens.hole||0)>=10,eff:{luck:25}},
-  {id:"u_all6",ico:"💫",name:"Heat Death Economy",cost:1e18,desc:"ALL generators ×5",req:s=>(s.gens.multi||0)>=10,eff:{gen:"all",mult:5}},
+  {id:"u_all6",ico:"💫",name:"Heat Death Economy",cost:1e18,desc:"ALL generators ×2.5",req:s=>(s.gens.multi||0)>=10,eff:{gen:"all",mult:2.5}},
+  {id:"u_all7",ico:"🌞",name:"Omniversal Cartel",cost:5e20,desc:"ALL generators ×2.5",req:s=>(s.gens.cartel||0)>=10,eff:{gen:"all",mult:2.5}},
+  {id:"u_all8",ico:"🕛",name:"End of Time",cost:1e23,desc:"ALL generators ×3",req:s=>(s.gens.singul||0)>=10,eff:{gen:"all",mult:3}},
+  {id:"u_reel6",ico:"🎟️",name:"Sixth Reel",cost:1e22,desc:"Add a 6th reel — colossal lines!",req:s=>!!s.ups.u_reel5&&s.spins>=2500,eff:{reels:6}},
+  {id:"u_pay5",ico:"🃏",name:"Cheat Codes",cost:1e21,desc:"Spin payouts ×5",req:s=>(s.gens.quantum||0)>=10,eff:{payMult:5}},
+  {id:"u_luck6",ico:"🌌",name:"Cosmic Clover",cost:1e24,desc:"+30% Luck",req:s=>(s.gens.realm||0)>=10,eff:{luck:30}},
 ];
 
 /* ============ VIP / prestige perks ============ */
@@ -466,7 +500,8 @@ const VIPS=[
   {id:"v_keep", ico:"🏦",name:"Head Start",     cost:8,max:4,desc:"Keep 5% of cps as starting coins / lvl"},
 ];
 function vipCost(v,l){return v.cost*(l+1);}
-function chipsFor(earned){return earned<1e6?0:Math.floor(Math.pow(earned/1e6,0.42));}
+// far rarer chips with a gentle exponent — prevents the +2%/chip runaway (was earned^0.42 → 100Ms of chips)
+function chipsFor(earned){return earned<1e9?0:Math.floor(Math.pow(earned/1e9,0.22));}
 
 /* ============ achievements ============ */
 const ACH=[
@@ -482,6 +517,8 @@ const ACH=[
   {id:"a_c1b",ico:"🤑",name:"Billionaire",desc:"1B coins earned",c:s=>s.totalEarned>=1e9},
   {id:"a_c1t",ico:"💸",name:"Trillionaire",desc:"1T coins earned",c:s=>s.totalEarned>=1e12},
   {id:"a_c1qa",ico:"🏆",name:"Beyond Money",desc:"1Qa coins earned",c:s=>s.totalEarned>=1e15},
+  {id:"a_c1qi",ico:"🌟",name:"Quintillionaire",desc:"1Qi coins earned",c:s=>s.totalEarned>=1e18},
+  {id:"a_c1sx",ico:"💫",name:"Multiversal Rich",desc:"1Sx coins earned",c:s=>s.totalEarned>=1e21},
   {id:"a_cat",ico:"🐱",name:"Cat Lady",desc:"50 Lucky Cats",c:s=>(s.gens.cat||0)>=50},
   {id:"a_bot",ico:"🤖",name:"Robot Uprising",desc:"50 Slot Bots",c:s=>(s.gens.bot||0)>=50},
   {id:"a_floor",ico:"🎰",name:"House Always Wins",desc:"50 Casino Floors",c:s=>(s.gens.floor||0)>=50},
@@ -501,7 +538,7 @@ const ACH=[
   {id:"a_win1m",ico:"🎆",name:"Big Win",desc:"Win 1M in one spin",c:s=>s.bestWin>=1e6},
   {id:"a_win1b",ico:"🎇",name:"Life-Changing",desc:"Win 1B in one spin",c:s=>s.bestWin>=1e9},
   {id:"a_time1h",ico:"⏰",name:"Dedicated",desc:"Play for 1 hour",c:s=>s.playtime>=3600},
-  {id:"a_end",ico:"♾️",name:"Infinite Jackpot",desc:"Beat the game",c:s=>s.totalEarned>=1e18},
+  {id:"a_end",ico:"♾️",name:"Infinite Jackpot",desc:"Beat the game",c:s=>s.totalEarned>=1e24},
 ];
 function achCount(){return Object.keys(S.ach).length;}
 function achMult(){return 1+achCount()*0.01;}
@@ -517,7 +554,7 @@ function chipMult(){return 1+S.chips*0.02;}
 function payMult(){let m=1;for(const u of UP)if(S.ups[u.id]&&u.eff.payMult)m*=u.eff.payMult;m*=1+(S.vips.v_pay||0)*0.25;m*=chipMult();m*=achMult();m*=buffMult();return m;}
 function genMultFor(id){let m=1;for(const u of UP)if(S.ups[u.id]&&u.eff.gen){if(u.eff.gen==="all"||u.eff.gen===id)m*=u.eff.mult;}m*=1+(S.vips.v_gen||0)*0.2;m*=chipMult();m*=achMult();m*=buffMult();return m;}
 function reelCount(){let r=3;for(const u of UP)if(S.ups[u.id]&&u.eff.reels)r=Math.max(r,u.eff.reels);return r;}
-function autoInterval(){let b=1200;for(const u of UP)if(S.ups[u.id]&&u.eff.autoSpeed)b*=u.eff.autoSpeed;b*=Math.pow(0.85,S.vips.v_auto||0);return Math.max(90,b);}
+function autoInterval(){let b=1200;for(const u of UP)if(S.ups[u.id]&&u.eff.autoSpeed)b*=u.eff.autoSpeed;b*=Math.pow(0.85,S.vips.v_auto||0);return Math.max(250,b);}
 function jackpotBoost(){return S.ups.u_jack?2:1;}
 function megaBoost(){return S.ups.u_mega?3:1;}
 function globalMult(){return chipMult()*achMult()*buffMult();}
@@ -569,20 +606,24 @@ let spinning=false;
 function currentBet(){return BETS[S.betIdx];}
 function evaluate(finals){
   const bet=currentBet(),mult=payMult(),rc=finals.length;
+  // Anti-runaway cap: a single spin can pay at most ~3 min of generator income (+ a bet-based floor for
+  // early game). This ties slot rewards to your REAL engine (generators) so no lucky spin wins the game.
+  const cap=cps()*180+bet*120+1000;
+  const cp=p=>Math.min(p,cap);
   const counts=new Map();let best=null,bestN=0;
   for(const s of finals){const n=(counts.get(s)||0)+1;counts.set(s,n);if(n>bestN){bestN=n;best=s;}}
   // full line
-  if(bestN===rc){const bonus=rc===3?1:rc===4?2.5:6;
-    const payout=best.three*bet*mult*bonus;
+  if(bestN===rc){const bonus=rc===3?1:rc===4?1.8:3.2;
+    const payout=cp(best.three*bet*mult*bonus);
     let kind=best.mega?"mega":best.jackpot?"jackpot":(best.three>=30?"big":"win");
     return{payout,kind,label:`${best.name} ×${rc}!`,win:[...Array(rc).keys()]};}
   // near miss (rc-1)
   if(bestN===rc-1 && rc>=4){const v=best.two>0?best.two:best.three*0.05;
-    return{payout:v*bet*mult*(rc===5?3:1.5),kind:"win",label:`${best.name} ×${bestN}`,win:idxOf(finals,best)};}
+    return{payout:cp(v*bet*mult*(rc===5?2:1.3)),kind:"win",label:`${best.name} ×${bestN}`,win:idxOf(finals,best)};}
   // pair on 3 reels
-  if(rc===3 && bestN===2 && best.two>0){return{payout:best.two*bet*mult,kind:"win",label:`${best.name} pair`,win:idxOf(finals,best)};}
+  if(rc===3 && bestN===2 && best.two>0){return{payout:cp(best.two*bet*mult),kind:"win",label:`${best.name} pair`,win:idxOf(finals,best)};}
   // small pair on 4/5
-  if(bestN===2 && best.two>0 && rc>=4){return{payout:best.two*bet*mult*0.4,kind:"win",label:`${best.name} pair`,win:idxOf(finals,best)};}
+  if(bestN===2 && best.two>0 && rc>=4){return{payout:cp(best.two*bet*mult*0.4),kind:"win",label:`${best.name} pair`,win:idxOf(finals,best)};}
   return{payout:0,kind:"lose",label:"No win",win:[]};
 }
 function idxOf(arr,sym){const r=[];arr.forEach((s,i)=>{if(s===sym)r.push(i);});return r;}
@@ -758,10 +799,13 @@ function renderUps(){const list=document.getElementById("upList");list.innerHTML
   if(!shown)list.innerHTML=`<div style="color:var(--dim);font-size:13px;text-align:center;padding:20px">No upgrades available yet.<br>Spin &amp; build to unlock more.</div>`;
   refreshAfford();}
 function renderPaytable(){const pt=document.getElementById("paytable");pt.innerHTML="";const rc=reelCount();const bonus=rc===3?1:rc===4?2.5:6;
-  for(const s of SYMBOLS){const el=document.createElement("div");el.className="item";el.style.cursor="default";
-    const two=s.two>0?`· pair ×${s.two}`:"";const tag=s.jackpot?' <span style="color:var(--neon)">JACKPOT</span>':s.mega?' <span style="color:var(--neon2)">MEGA</span>':"";
-    el.innerHTML=`<div class="ico">${s.ch.repeat(Math.min(rc,3))}</div><div class="body"><div class="name">${s.name}${tag}</div><div class="desc">Full line ${two}</div></div>
-      <div class="right"><div class="cost" style="color:var(--gold)">×${fmt(s.three*bonus)}</div></div>`;pt.appendChild(el);}}
+  SYMBOLS.forEach((s,i)=>{const el=document.createElement("div");el.className="ptrow";
+    const rar=s.mega?"r3":s.jackpot?"r2":(i>=3?"r1":"");
+    const toks=Array.from({length:Math.min(rc,3)},()=>`<div class="tok ${rar}">${s.ch}</div>`).join("");
+    const two=s.two>0?`Full line · pair pays ×${s.two}`:"Full line only";
+    const tag=s.jackpot?'<span class="ptag j">JACKPOT</span>':s.mega?'<span class="ptag m">MEGA</span>':"";
+    el.innerHTML=`<div class="syms">${toks}</div><div><div class="pn">${s.name} ${tag}</div><div class="pd">${two}</div></div><div class="pay">×${fmt(s.three*bonus)}</div>`;
+    pt.appendChild(el);});}
 function renderBets(){const w=document.getElementById("betChips");w.innerHTML="";
   BETS.forEach((b,i)=>{const c=document.createElement("button");c.className="chip"+(i===S.betIdx?" active":"")+(S.coins<b?" cant":"");c.textContent=fmt(b);
     c.onclick=()=>{S.betIdx=i;renderBets();updateStats();};w.appendChild(c);});
@@ -780,7 +824,7 @@ function renderVip(){const pending=Math.max(0,chipsFor(S.totalEarned)-S.chipsBan
   document.getElementById("vChipBig").textContent=fmtInt(S.chips);
   document.getElementById("vMult").innerHTML=`×${chipMult().toFixed(2)} permanent bonus · <b>${fmtInt(S.prestiges)}</b> prestige${S.prestiges===1?'':'s'}`;
   document.getElementById("prestigeGain").textContent="+"+fmtInt(pending);
-  const nextNeed=Math.pow(S.chipsBanked+1,1/0.42)*1e6;
+  const nextNeed=Math.pow(S.chipsBanked+1,1/0.22)*1e9;
   document.getElementById("prestigeDesc").textContent=pending>0?`Bank ${fmtInt(pending)} chip${pending>1?'s':''} → ×${(1+(S.chips+pending)*0.02).toFixed(2)} bonus (resets run)`:`Earn ${fmt(nextNeed)} total coins for your next chip`;
   document.getElementById("prestigeBtn").classList.toggle("dim",pending<1);
   const list=document.getElementById("vipUpList");list.innerHTML="";
@@ -809,8 +853,9 @@ function renderStats(){const g=document.getElementById("statGrid");
 const GOALS=[
   {amt:1e4,label:"First Big Win",done:false},{amt:1e6,label:"Millionaire",done:false},
   {amt:1e8,label:"High Roller",done:false},{amt:1e10,label:"Casino Tycoon",done:false},
-  {amt:1e12,label:"Galactic Magnate",done:false},{amt:1e14,label:"Cosmic Mogul",done:false},
-  {amt:1e16,label:"Reality Owner",done:false},{amt:1e18,label:"THE INFINITE JACKPOT",done:false,ending:true},
+  {amt:1e12,label:"Galactic Magnate",done:false},{amt:1e15,label:"Cosmic Mogul",done:false},
+  {amt:1e18,label:"Reality Owner",done:false},{amt:1e21,label:"Dimension Lord",done:false},
+  {amt:1e24,label:"THE INFINITE JACKPOT",done:false,ending:true},
 ];
 let endingShown=false;
 function checkEnding(){for(const g of GOALS){if(!g.done&&S.totalEarned>=g.amt){g.done=true;
@@ -862,7 +907,7 @@ function openSettings(){const seg=(cur,opts)=>opts.map(o=>`<button data-v="${o.v
 document.getElementById("gearBtn").onclick=openSettings;document.getElementById("settingsBtn").onclick=openSettings;
 
 /* ============ save / load ============ */
-const KEY="neonSpinSave_v2",SKEY="neonSpinSet_v2";
+const KEY="neonSpinSave_v3",SKEY="neonSpinSet_v2";
 function snapshot(){S.savedAt=Date.now();return{S,SET,goals:GOALS.map(g=>g.done),endingShown,buffs};}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(snapshot()));}catch(e){}}
 function saveSettings(){try{localStorage.setItem(SKEY,JSON.stringify(SET));}catch(e){}}
@@ -892,7 +937,22 @@ window.addEventListener("keydown",e=>{if(e.target.tagName==="TEXTAREA")return;
 
 let _rz;window.addEventListener("resize",()=>{clearTimeout(_rz);_rz=setTimeout(()=>{if(!spinning)renderMachine();},180);});
 
+/* ============ progress telemetry (dev) — posts to local logging server ============ */
+function logProgress(reason){try{
+  const d={t:Math.round(S.playtime),reason:reason||"tick",spins:S.spins,manual:S.manualSpins,auto:S.autoSpins,
+    coins:Math.round(S.coins),coinsF:fmt(S.coins),earned:S.totalEarned,earnedF:fmt(S.totalEarned),
+    cps:Math.round(cps()),cpsF:fmt(cps()),chips:S.chips,mult:+globalMult().toFixed(2),luck:Math.round(luckPct()),
+    reels:reelCount(),prestiges:S.prestiges,bestWin:fmt(S.bestWin),bet:currentBet(),gens:Object.keys(S.gens).length};
+  const body=JSON.stringify(d);
+  if(navigator.sendBeacon)navigator.sendBeacon("/log",body);
+  else fetch("/log",{method:"POST",body,keepalive:true}).catch(()=>{});
+}catch(e){}}
+setInterval(()=>logProgress("tick"),5000);
+window.addEventListener("beforeunload",()=>logProgress("unload"));
+
 /* ============ boot ============ */
+// dev reset: visiting /?reset wipes the save for a clean balanced start
+if(location.search.indexOf("reset")>=0){try{localStorage.removeItem(KEY);localStorage.removeItem(SKEY);}catch(e){}history.replaceState(null,"",location.pathname);}
 function updateUI(){renderGens();if(curTab==="up")renderUps();if(curTab==="vip")renderVip();if(curTab==="stats")renderStats();updateStats();}
 function fullRender(){renderBets();renderGens();renderUps();renderPaytable();renderVip();renderAch();renderAuto();renderStats();updateStats();setupAuto();renderBuffs();}
 load();renderMachine();fullRender();pushNews(NEWS[0]);
