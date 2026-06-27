@@ -105,7 +105,7 @@
     box-shadow:0 0 22px rgba(51,255,153,.55);animation:cashshine 2s linear infinite,pulse 1s infinite}
   .reels{display:flex;gap:7px;justify-content:center;margin:2px 0 14px;padding:10px;border-radius:14px;
     background:linear-gradient(180deg,#05030c,#130926);box-shadow:inset 0 4px 16px rgba(0,0,0,.8)}
-  .reel{width:calc(var(--sh,104px) * .82);height:var(--sh,104px);border-radius:12px;overflow:hidden;
+  .reel{width:calc(var(--sh,104px) * .82);height:calc(var(--sh,104px) * var(--rows,1));border-radius:12px;overflow:hidden;
     background:linear-gradient(180deg,#0a0614,#211038);border:2px solid #6a36a0;position:relative;
     box-shadow:inset 0 10px 16px rgba(0,0,0,.7),inset 0 -10px 16px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.04);flex:0 0 auto;transition:border-color .15s,box-shadow .15s}
   .reel.win{border-color:var(--gold);box-shadow:0 0 24px var(--gold),inset 0 0 20px rgba(255,210,63,.35)}
@@ -154,18 +154,19 @@
   .tab.notify .dot{display:block}
   .list{display:flex;flex-direction:column;gap:8px;max-height:600px;overflow-y:auto;padding-right:4px}
   .list::-webkit-scrollbar{width:8px}.list::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
-  .item{display:flex;align-items:center;gap:11px;background:#1a0d30;border:1px solid var(--line);border-radius:12px;
-    padding:9px 11px;cursor:pointer;transition:.12s;position:relative;overflow:hidden}
+  .item{display:flex;align-items:center;gap:12px;background:#1a0d30;border:1px solid var(--line);border-radius:12px;
+    padding:9px 12px;cursor:pointer;transition:.12s;position:relative;overflow:hidden;min-height:58px}
   .item:hover:not(.locked):not(.maxed){border-color:var(--neon2);background:#22113f}
   .item.afford{border-color:#4a2c7a}.item.cant{opacity:.55}
   .item.locked{opacity:.4;cursor:not-allowed;filter:grayscale(.6)}
   .item.maxed{opacity:.85;cursor:default;border-color:var(--green)}
-  .item .ico{font-size:28px;width:40px;text-align:center;flex:0 0 auto}
-  .item .body{flex:1;min-width:0}
-  .item .name{font-weight:800;font-size:13.5px}
-  .item .desc{font-size:11.5px;color:var(--dim);line-height:1.3}
-  .item .right{text-align:right;white-space:nowrap}
-  .item .cost{font-weight:800;color:var(--gold);font-size:13.5px}
+  .item .ico{font-size:23px;width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;overflow:hidden;
+    background:radial-gradient(circle at 50% 32%,#2c1452,#160a28);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),0 2px 5px rgba(0,0,0,.4)}
+  .item .body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+  .item .name{font-weight:700;font-size:14px;line-height:1.2;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:7px}
+  .item .desc{font-size:11.5px;color:var(--dim);line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .right{text-align:right;white-space:nowrap;flex:0 0 auto;padding-left:6px}
+  .item .cost{font-weight:800;color:var(--gold);font-size:14px;font-family:'Orbitron'}
   .item .cost.no{color:var(--bad)}.item .owned{font-size:11px;color:var(--neon2);font-weight:700}
   .qtyrow{display:flex;gap:6px;justify-content:flex-end;margin-bottom:8px;align-items:center}
   .qtybtn{font-size:11px;padding:4px 9px;border-radius:8px;background:#1a0d30;border:1px solid var(--line);color:var(--dim);cursor:pointer;font-weight:700}
@@ -432,6 +433,7 @@ function newGame(){return{
 };}
 const S=newGame();
 const SET={sound:true,notation:"short",particles:true,golden:true};
+let devRows=0; // ?rows=N preview override
 
 /* ============ generators ============ */
 const GENS=[
@@ -495,6 +497,9 @@ const UP=[
   {id:"u_all7",ico:"🌞",name:"Omniversal Cartel",cost:5e20,desc:"ALL generators ×2.5",req:s=>(s.gens.cartel||0)>=10,eff:{gen:"all",mult:2.5}},
   {id:"u_all8",ico:"🕛",name:"End of Time",cost:1e23,desc:"ALL generators ×3",req:s=>(s.gens.singul||0)>=10,eff:{gen:"all",mult:3}},
   {id:"u_reel6",ico:"🎟️",name:"Sixth Reel",cost:1e22,desc:"Add a 6th reel — colossal lines!",req:s=>!!s.ups.u_reel5&&s.spins>=2500,eff:{reels:6}},
+  {id:"u_grid3",ico:"🎛️",name:"3-Row Grid",cost:6e6,desc:"Reels become a grid — pays every row + diagonals!",req:s=>s.spins>=180,eff:{rows:3}},
+  {id:"u_grid4",ico:"🧮",name:"4-Row Grid",cost:2e9,desc:"4 rows of paylines",req:s=>!!s.ups.u_grid3&&s.spins>=600,eff:{rows:4}},
+  {id:"u_grid5",ico:"🔲",name:"5-Row Mega Grid",cost:8e11,desc:"5 rows — a full grid of ways to win!",req:s=>!!s.ups.u_grid4&&s.spins>=1500,eff:{rows:5}},
   {id:"u_pay5",ico:"🃏",name:"Cheat Codes",cost:1e21,desc:"Spin payouts ×5",req:s=>(s.gens.quantum||0)>=10,eff:{payMult:5}},
   {id:"u_luck6",ico:"🌌",name:"Cosmic Clover",cost:1e24,desc:"+30% Luck",req:s=>(s.gens.realm||0)>=10,eff:{luck:30}},
 ];
@@ -536,6 +541,7 @@ const ACH=[
   {id:"a_alltier",ico:"🌐",name:"Diversified",desc:"Own every generator type",c:s=>GENS.every(g=>(s.gens[g.id]||0)>=1)},
   {id:"a_reel4",ico:"🎟️",name:"Four on the Floor",desc:"Unlock the 4th reel",c:s=>!!s.ups.u_reel4},
   {id:"a_reel5",ico:"🖐️",name:"High Five",desc:"Unlock the 5th reel",c:s=>!!s.ups.u_reel5},
+  {id:"a_grid",ico:"🎛️",name:"Off the Grid",desc:"Upgrade to a multi-row grid",c:s=>!!s.ups.u_grid3},
   {id:"a_up10",ico:"🛒",name:"Shopaholic",desc:"Buy 10 upgrades",c:s=>Object.keys(s.ups).length>=10},
   {id:"a_upall",ico:"✅",name:"Completionist",desc:"Buy every upgrade",c:s=>UP.every(u=>s.ups[u.id])},
   {id:"a_luck50",ico:"🍀",name:"Fortune's Fool",desc:"Reach 50% Luck",c:s=>luckPct()>=50},
@@ -567,6 +573,7 @@ function chipMult(){return 1+S.chips*0.02;}
 function payMult(){let m=1;for(const u of UP)if(S.ups[u.id]&&u.eff.payMult)m*=u.eff.payMult;m*=1+(S.vips.v_pay||0)*0.25;m*=chipMult();m*=achMult();m*=buffMult();return m;}
 function genMultFor(id){let m=1;for(const u of UP)if(S.ups[u.id]&&u.eff.gen){if(u.eff.gen==="all"||u.eff.gen===id)m*=u.eff.mult;}m*=1+(S.vips.v_gen||0)*0.2;m*=chipMult();m*=achMult();m*=buffMult();return m;}
 function reelCount(){let r=3;for(const u of UP)if(S.ups[u.id]&&u.eff.reels)r=Math.max(r,u.eff.reels);return r;}
+function rowCount(){let r=Math.max(1,devRows);for(const u of UP)if(S.ups[u.id]&&u.eff.rows)r=Math.max(r,u.eff.rows);return r;}
 function autoInterval(){let b=1200;for(const u of UP)if(S.ups[u.id]&&u.eff.autoSpeed)b*=u.eff.autoSpeed;b*=Math.pow(0.85,S.vips.v_auto||0);return Math.max(400,b);}
 function jackpotBoost(){return S.ups.u_jack?2:1;}
 function megaBoost(){return S.ups.u_mega?3:1;}
@@ -583,69 +590,76 @@ function pickSymbol(pool,tw){let r=Math.random()*tw;for(const e of pool){r-=e.w;
 /* ============ machine DOM ============ */
 let SH=104; const STRIP_LEN=24;
 let strips=[];
-function computeSH(rc){
+function computeSH(rc,rows){
   const wrap=document.getElementById("reels");
   const avail=(wrap.clientWidth||340)-20;
   const gap=7;
-  let sh=((avail-(rc-1)*gap)/rc)/0.82;
-  return Math.round(Math.max(54,Math.min(116,sh)));
+  const byW=((avail-(rc-1)*gap)/rc)/0.82;     // fit columns to width
+  const byH=380/(rows||1);                      // keep total grid height sane
+  return Math.round(Math.max(40,Math.min(112,byW,byH)));
 }
+function rndSym(){return SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)].ch;}
 function renderMachine(){
-  const rc=reelCount();
+  const rc=reelCount(),rows=rowCount();
   const wrap=document.getElementById("reels");
-  SH=computeSH(rc);
+  SH=computeSH(rc,rows);
   wrap.style.setProperty("--sh",SH+"px");
-  wrap.innerHTML="";
-  strips=[];
+  wrap.style.setProperty("--rows",rows);
+  wrap.innerHTML="";strips=[];
   for(let i=0;i<rc;i++){
     const reel=document.createElement("div");reel.className="reel";reel.id="reel"+i;
     const strip=document.createElement("div");strip.className="strip";strip.id="strip"+i;
-    reel.appendChild(strip);
-    if(i===rc-1){const pl=document.createElement("div");pl.className="payline";reel.appendChild(pl);}
-    wrap.appendChild(reel);
-    strips.push(strip);
+    reel.appendChild(strip);wrap.appendChild(reel);strips.push(strip);
   }
-  strips.forEach(el=>{setStripFinal(el,SYMBOLS[Math.floor(Math.random()*5)]);el.style.transform=`translateY(${-((STRIP_LEN-2)*SH)}px)`;});
-  document.getElementById("reelInfo").textContent=rc+" reels";
+  strips.forEach(el=>{const col=Array.from({length:rows},()=>SYMBOLS[Math.floor(Math.random()*5)]);
+    setStripFinalCol(el,col);el.style.transform=`translateY(${-((STRIP_LEN-rows)*SH)}px)`;});
+  document.getElementById("reelInfo").textContent=rows>1?(rc+"×"+rows+" grid"):(rc+" reels");
 }
-function setStripFinal(el,sym){
-  el.innerHTML="";
+// place `col` (top→bottom symbols) on the bottom rows cells; rest random
+function setStripFinalCol(el,col){
+  el.innerHTML="";const rows=col.length;
   for(let i=0;i<STRIP_LEN;i++){const d=document.createElement("div");d.className="sym";
-    d.textContent=(i===STRIP_LEN-2)?sym.ch:SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)].ch;el.appendChild(d);}
+    d.textContent=(i>=STRIP_LEN-rows)?col[i-(STRIP_LEN-rows)].ch:rndSym();el.appendChild(d);}
 }
 
 /* ============ spin ============ */
 let spinning=false;
 function currentBet(){return BETS[S.betIdx];}
-function evaluate(finals){
-  const bet=currentBet(),rc=finals.length;
-  const mult=payMult()*(S.freeSpins>0?(S.freeMult||3):1); // free spins multiply all wins
-  // Anti-runaway cap: a single spin pays at most ~1 min of generator income + 2% of current coins
-  // (+ small flat/bet floor for early game). Crucially the bet term is TINY so spins can't compound
-  // wealth — real growth comes from reinvesting into cost-gated generators.
-  const cap=cps()*60+S.coins*0.02+bet*2+2000;
-  const cp=p=>Math.min(p,cap);
-  const scat=finals.filter(s=>s.scatter).length;     // scatters → bonus trigger
-  const wild=finals.filter(s=>s.wild).length;         // wilds substitute for any symbol
-  const core=finals.filter(s=>!s.wild&&!s.scatter);
-  // best line symbol, counting wilds as matches (multiway feel)
+// score one horizontal line (array of symbols), with wild substitution — returns uncapped payout
+function evaluateLine(line){
+  const rc=line.length;
+  const bet=currentBet(),mult=payMult()*(S.freeSpins>0?(S.freeMult||3):1);
+  const wild=line.filter(s=>s.wild).length;
+  const core=line.filter(s=>!s.wild&&!s.scatter);
   let best=null,bestN=0;
   [...new Set(core)].forEach(s=>{const c=core.filter(x=>x===s).length+wild;
     if(c>bestN||(c===bestN&&best&&s.three>best.three)){bestN=c;best=s;}});
-  if(!best&&wild>=2){best=SYMBOLS.find(s=>s.mega);bestN=wild;} // all-wild line → top symbol
-  const out={payout:0,kind:"lose",label:"No win",win:[],bonus:scat>=3,scatters:scat};
-  if(best){
-    const winIdx=[];finals.forEach((s,i)=>{if(s===best||s.wild)winIdx.push(i);});
-    const wmult=wild>0?1+wild*0.5:1;                  // each wild boosts the win
-    const tag=wild>0?` +${wild}🃏`:"";
-    if(bestN>=rc){const rb=rc===3?1:rc===4?1.8:rc===5?3.2:5;
-      out.payout=cp(best.three*bet*mult*rb*wmult);out.win=winIdx;
-      out.kind=best.mega?"mega":best.jackpot?"jackpot":(best.three>=30?"big":"win");out.label=`${best.name} ×${rc}!${tag}`;}
-    else if(bestN===rc-1&&rc>=4&&best.two>0){out.payout=cp(best.two*bet*mult*(rc===5?2:1.3)*wmult);out.win=winIdx;out.kind="win";out.label=`${best.name} ×${bestN}${tag}`;}
-    else if(rc===3&&bestN===2&&best.two>0){out.payout=cp(best.two*bet*mult*wmult);out.win=winIdx;out.kind="win";out.label=`${best.name} pair${tag}`;}
-    else if(bestN===2&&best.two>0&&rc>=4){out.payout=cp(best.two*bet*mult*0.4*wmult);out.win=winIdx;out.kind="win";out.label=`${best.name} pair${tag}`;}
-  }
-  return out;
+  if(!best&&wild>=2){best=SYMBOLS.find(s=>s.mega);bestN=wild;}
+  if(!best)return{payout:0};
+  const wmult=wild>0?1+wild*0.5:1,tag=wild>0?` +${wild}🃏`:"";
+  if(bestN>=rc){const rb=rc===3?1:rc===4?1.8:rc===5?3.2:rc>=6?5:1;
+    return{payout:best.three*bet*mult*rb*wmult,kind:best.mega?"mega":best.jackpot?"jackpot":(best.three>=30?"big":"win"),label:`${best.name} ×${rc}${tag}`};}
+  if(bestN===rc-1&&rc>=4&&best.two>0)return{payout:best.two*bet*mult*(rc===5?2:1.3)*wmult,kind:"win",label:`${best.name} ×${bestN}${tag}`};
+  if(rc===3&&bestN===2&&best.two>0)return{payout:best.two*bet*mult*wmult,kind:"win",label:`${best.name} pair${tag}`};
+  if(bestN===2&&best.two>0&&rc>=4)return{payout:best.two*bet*mult*0.4*wmult,kind:"win",label:`${best.name} pair${tag}`};
+  return{payout:0};
+}
+// evaluate the whole grid (array of columns, each column = array of rows symbols)
+function evaluate(grid){
+  const rc=grid.length,rows=grid[0].length,bet=currentBet();
+  const cap=cps()*60+S.coins*0.02+bet*2+2000;
+  let scat=0;grid.forEach(col=>col.forEach(s=>{if(s&&s.scatter)scat++;}));
+  const lines=[];
+  for(let r=0;r<rows;r++)lines.push(grid.map(col=>col[r]));        // each row is a payline
+  if(rows>=3){const n=Math.min(rc,rows);                           // two diagonals
+    lines.push(Array.from({length:n},(_,k)=>grid[k][k]));
+    lines.push(Array.from({length:n},(_,k)=>grid[k][rows-1-k]));}
+  const order={win:1,big:2,jackpot:3,mega:4};
+  let total=0,kind="lose",label="No win",any=false;
+  for(const ln of lines){const r=evaluateLine(ln);if(r.payout>0){total+=r.payout;any=true;
+    if((order[r.kind]||0)>(order[kind]||0)){kind=r.kind;label=r.label;}}}
+  total=Math.min(total,cap);
+  return{payout:total,kind:any?kind:"lose",label:any?label:"No win",win:any?[...Array(rc).keys()]:[],bonus:scat>=3,scatters:scat};
 }
 function idxOf(arr,sym){const r=[];arr.forEach((s,i)=>{if(s===sym)r.push(i);});return r;}
 
@@ -658,11 +672,12 @@ async function spin(manual){
   const btn=document.getElementById("spinBtn");btn.disabled=true;
   document.querySelectorAll(".reel").forEach(r=>r.classList.remove("win"));
   const pool=weightedSymbols();const tw=pool.reduce((a,e)=>a+e.w,0);
-  const rc=reelCount();const finals=[];for(let i=0;i<rc;i++)finals.push(pickSymbol(pool,tw));
+  const rc=reelCount(),rows=rowCount();
+  const grid=[];for(let c=0;c<rc;c++){const col=[];for(let r=0;r<rows;r++)col.push(pickSymbol(pool,tw));grid.push(col);}
   const dur=(manual&&!free)?620:Math.min(360,autoInterval()*0.55);
   beep(330,0.03);if(manual&&!free)sfx("spin",0.35);
-  await animateReels(finals,dur);
-  const res=evaluate(finals);
+  await animateReels(grid,dur);
+  const res=evaluate(grid);
   if(res.payout>0){
     S.coins+=res.payout;S.totalEarned+=res.payout;S.runEarned+=res.payout;
     if(res.payout>S.bestWin)S.bestWin=res.payout;
@@ -712,13 +727,14 @@ function renderBonusBanner(){
   if(m){if(S.freeSpins>0){m.style.display="block";m.textContent=`🎁 FREE SPINS: ${S.freeSpins} left · ALL WINS ×${S.freeMult||3}`;}else m.style.display="none";}
   if(b)b.disabled=S.freeSpins>0;
 }
-function animateReels(finals,dur){
+function animateReels(grid,dur){
   return new Promise(res=>{
-    finals.forEach((sym,i)=>{const el=strips[i];if(!el)return;setStripFinal(el,sym);
+    const rows=grid[0].length;
+    grid.forEach((col,i)=>{const el=strips[i];if(!el)return;setStripFinalCol(el,col);
       el.style.transition="none";el.style.transform=`translateY(${-(STRIP_LEN*SH)}px)`;void el.offsetHeight;
       const d=dur+i*110;el.style.transition=`transform ${d}ms cubic-bezier(.18,.7,.2,1)`;
-      el.style.transform=`translateY(${-((STRIP_LEN-2)*SH)}px)`;});
-    setTimeout(res,dur+(finals.length-1)*110+30);
+      el.style.transform=`translateY(${-((STRIP_LEN-rows)*SH)}px)`;});
+    setTimeout(res,dur+(grid.length-1)*110+30);
   });
 }
 function flashResult(t,c){const r=document.getElementById("result");r.className="result "+c;r.textContent=t;}
@@ -849,7 +865,7 @@ function renderUps(){const list=document.getElementById("upList");list.innerHTML
   for(const u of UP){if(S.ups[u.id]||!u.req(S))continue;shown++;
     const el=document.createElement("div");el.className="item";el.setAttribute("data-up",u.id);
     el.innerHTML=`<div class="ico">${u.ico}</div><div class="body"><div class="name">${u.name}</div><div class="desc">${u.desc}</div></div><div class="right"><div class="cost">${fmt(u.cost)}</div></div>`;
-    el.onclick=()=>{if(S.coins>=u.cost){S.coins-=u.cost;S.ups[u.id]=true;beep(560,0.1);sfx("buy",0.5);if(u.eff.reels)renderMachine();renderUps();renderGens();updateStats();setupAuto();checkAchievements();toast(u.ico,"Upgrade!",u.name);}};
+    el.onclick=()=>{if(S.coins>=u.cost){S.coins-=u.cost;S.ups[u.id]=true;beep(560,0.1);sfx("buy",0.5);if(u.eff.reels||u.eff.rows)renderMachine();renderUps();renderGens();updateStats();setupAuto();checkAchievements();toast(u.ico,"Upgrade!",u.name);}};
     list.appendChild(el);}
   if(!shown)list.innerHTML=`<div style="color:var(--dim);font-size:13px;text-align:center;padding:20px">No upgrades available yet.<br>Spin &amp; build to unlock more.</div>`;
   refreshAfford();}
@@ -1012,7 +1028,8 @@ window.addEventListener("beforeunload",()=>logProgress("unload"));
 
 /* ============ boot ============ */
 // dev reset: visiting /?reset wipes the save for a clean balanced start
-if(location.search.indexOf("reset")>=0){try{localStorage.removeItem(KEY);localStorage.removeItem(SKEY);}catch(e){}history.replaceState(null,"",location.pathname);}
+if(location.search.indexOf("reset")>=0){try{localStorage.removeItem(KEY);localStorage.removeItem(SKEY);}catch(e){}}
+{const _q=new URLSearchParams(location.search);devRows=parseInt(_q.get("rows"))||0;}
 function updateUI(){renderGens();if(curTab==="up")renderUps();if(curTab==="vip")renderVip();if(curTab==="stats")renderStats();updateStats();}
 function fullRender(){renderBets();renderGens();renderUps();renderPaytable();renderVip();renderAch();renderAuto();renderStats();updateStats();setupAuto();renderBuffs();}
 load();renderMachine();fullRender();renderBonusBanner();pushNews(NEWS[0]);
