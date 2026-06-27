@@ -398,11 +398,11 @@ function fmtTime(s){s=Math.floor(s);const d=Math.floor(s/86400),h=Math.floor(s%8
 
 /* ============ symbols ============ */
 const SYMBOLS=[
-  {ch:"🍒",name:"Cherry", weight:34,three:3,   two:1},
-  {ch:"🍋",name:"Lemon",  weight:26,three:5,   two:1},
-  {ch:"🔔",name:"Bell",   weight:18,three:12,  two:2},
-  {ch:"⭐",name:"Star",   weight:11,three:30,  two:3},
-  {ch:"💎",name:"Diamond",weight:6, three:90,  two:6},
+  {ch:"🍒",name:"Cherry", weight:34,three:3,   two:0.4},
+  {ch:"🍋",name:"Lemon",  weight:26,three:5,   two:0.5},
+  {ch:"🔔",name:"Bell",   weight:18,three:12,  two:1},
+  {ch:"⭐",name:"Star",   weight:11,three:30,  two:1.5},
+  {ch:"💎",name:"Diamond",weight:6, three:90,  two:3},
   {ch:"7️⃣",name:"Lucky 7",weight:3, three:300, two:0,jackpot:true},
   {ch:"🌌",name:"Galaxy", weight:1, three:2500,two:0,mega:true},
   {ch:"🃏",name:"Wild",   weight:5, three:0,   two:0,wild:true},
@@ -567,7 +567,7 @@ function chipMult(){return 1+S.chips*0.02;}
 function payMult(){let m=1;for(const u of UP)if(S.ups[u.id]&&u.eff.payMult)m*=u.eff.payMult;m*=1+(S.vips.v_pay||0)*0.25;m*=chipMult();m*=achMult();m*=buffMult();return m;}
 function genMultFor(id){let m=1;for(const u of UP)if(S.ups[u.id]&&u.eff.gen){if(u.eff.gen==="all"||u.eff.gen===id)m*=u.eff.mult;}m*=1+(S.vips.v_gen||0)*0.2;m*=chipMult();m*=achMult();m*=buffMult();return m;}
 function reelCount(){let r=3;for(const u of UP)if(S.ups[u.id]&&u.eff.reels)r=Math.max(r,u.eff.reels);return r;}
-function autoInterval(){let b=1200;for(const u of UP)if(S.ups[u.id]&&u.eff.autoSpeed)b*=u.eff.autoSpeed;b*=Math.pow(0.85,S.vips.v_auto||0);return Math.max(250,b);}
+function autoInterval(){let b=1200;for(const u of UP)if(S.ups[u.id]&&u.eff.autoSpeed)b*=u.eff.autoSpeed;b*=Math.pow(0.85,S.vips.v_auto||0);return Math.max(400,b);}
 function jackpotBoost(){return S.ups.u_jack?2:1;}
 function megaBoost(){return S.ups.u_mega?3:1;}
 function globalMult(){return chipMult()*achMult()*buffMult();}
@@ -620,8 +620,10 @@ function currentBet(){return BETS[S.betIdx];}
 function evaluate(finals){
   const bet=currentBet(),rc=finals.length;
   const mult=payMult()*(S.freeSpins>0?(S.freeMult||3):1); // free spins multiply all wins
-  // Anti-runaway cap: a single spin pays at most ~3 min of generator income (+bet floor early game).
-  const cap=cps()*180+bet*120+1000;
+  // Anti-runaway cap: a single spin pays at most ~1 min of generator income + 2% of current coins
+  // (+ small flat/bet floor for early game). Crucially the bet term is TINY so spins can't compound
+  // wealth — real growth comes from reinvesting into cost-gated generators.
+  const cap=cps()*60+S.coins*0.02+bet*2+2000;
   const cp=p=>Math.min(p,cap);
   const scat=finals.filter(s=>s.scatter).length;     // scatters → bonus trigger
   const wild=finals.filter(s=>s.wild).length;         // wilds substitute for any symbol
