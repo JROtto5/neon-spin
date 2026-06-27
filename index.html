@@ -304,7 +304,7 @@
 
   <div class="bankbar">
     <div class="stat"><div class="label">Coins</div><div class="val coins" id="coins">0</div></div>
-    <div class="stat"><div class="label">Per Second</div><div class="val cps" id="cps">0</div></div>
+    <div class="stat"><div class="label">Auto / sec</div><div class="val cps" id="cps">0</div></div>
     <div class="stat"><div class="label">VIP Chips</div><div class="val chips" id="chips">0</div></div>
     <div class="stat"><div class="label">Spins</div><div class="val dim" id="spins">0</div></div>
     <div class="stat"><div class="label">Luck</div><div class="val neon" id="luck">0%</div></div>
@@ -351,7 +351,7 @@
       </div>
 
       <div id="tab-gen">
-        <div style="font-size:11.5px;color:var(--dim);margin-bottom:9px;line-height:1.4">🎰 Your network of <b style="color:var(--neon2)">auto-spinning slot machines</b> — each spins itself for passive coins while you chase the big wins.</div>
+        <div style="font-size:11.5px;color:var(--dim);margin-bottom:9px;line-height:1.4">🎰 <b style="color:var(--neon2)">Upgrade your slot machine.</b> Coins come only from spinning — make every spin pay more, raise your table limit, then let Auto-Spin grind while you're away.</div>
         <div class="qtyrow">
           <span style="font-size:11px;color:var(--dim);margin-right:auto">Buy:</span>
           <button class="qtybtn active" data-q="1">×1</button>
@@ -440,14 +440,11 @@ const SYMBOLS=[
   {ch:"🃏",name:"Wild",   weight:5, three:0,   two:0,wild:true},
   {ch:"🎁",name:"Scatter",weight:6, three:0,   two:0,scatter:true},
 ];
-// dynamic bet ladder — grows with peak wealth
-let BETS=[10,50,250,1000,5000,25000];
-function niceBets(peak){const mant=[1,2.5,5];const out=[];
-  for(let e=1;e<=40;e++)for(const m of mant){const v=m*Math.pow(10,e);if(v<=Math.max(250,peak))out.push(v);}
-  if(!out.length)out.push(10);return out.slice(-6);}
+// bet ladder is GATED by the Table Limit slot upgrade (not by wealth) — this is what prevents runaway
+let BETS=[10,40,160,640,2560,10240];
 function maybeRefreshBets(){
-  // ladder top always tracks your CURRENT coins so you can MAX at any scale (and it shrinks when you're low)
-  const nb=niceBets(Math.max(250,S.coins));
+  const u=10*tableLimitMult(); // base unit, raised only by buying Table Limit
+  const nb=[u,u*4,u*16,u*64,u*256,u*1024].map(v=>Math.round(v));
   if(nb.length!==BETS.length||nb.some((v,i)=>v!==BETS[i])){BETS=nb;if(S.betIdx>=BETS.length)S.betIdx=BETS.length-1;renderBets();}
 }
 
@@ -467,29 +464,31 @@ const SET={sound:true,notation:"short",particles:true,golden:true};
 let devRows=0; // ?rows=N preview override
 
 /* ============ generators ============ */
-// every generator is a SLOT MACHINE that auto-spins for you (theme: from one penny slot to a cosmic slot network)
+// BUILD = repeatable SLOT UPGRADES (improve the machine itself). S.gens[id] = level. No passive income —
+// coins come only from spinning; auto-spin is your idle. Bets are gated by Table Limit so wealth can't runaway.
 const GENS=[
-  {id:"cat",   ico:"🎰",name:"Penny Slot",        base:15,    cps:0.6},
-  {id:"bot",   ico:"🕹️",name:"Classic 3-Reel",    base:110,   cps:5},
-  {id:"lounge",ico:"🍒",name:"Fruit Machine",     base:1300,  cps:47},
-  {id:"floor", ico:"📺",name:"Video Slot",        base:16500, cps:380},
-  {id:"online",ico:"🪙",name:"Slot Bank",         base:210000,cps:3100},
-  {id:"vault", ico:"🎴",name:"Slot Arcade",       base:3.1e6, cps:25000},
-  {id:"city",  ico:"🎟️",name:"Slot Parlor",       base:4.6e7, cps:200000},
-  {id:"orbit", ico:"🎲",name:"Slot Casino",       base:7.2e8, cps:1.7e6},
-  {id:"galaxy",ico:"🎡",name:"Slot Megaplex",     base:1.3e10,cps:1.5e7},
-  {id:"nebula",ico:"🌐",name:"Online Slots",      base:2.4e11,cps:1.45e8},
-  {id:"hole",  ico:"📱",name:"Mobile Slots App",  base:4.8e12,cps:1.35e9},
-  {id:"multi", ico:"🛰️",name:"Orbital Slot Array",base:1.05e14,cps:1.3e10},
-  {id:"deity", ico:"🌌",name:"Galactic Slot Grid",base:2.5e15,cps:1.45e11},
-  {id:"quantum",ico:"⚛️",name:"Quantum Slots",     base:6e16,  cps:1.4e12},
-  {id:"dimen", ico:"🌀",name:"Dimensional Slots",  base:1.4e18,cps:1.3e13},
-  {id:"cartel",ico:"💠",name:"Multiverse Slots",   base:3.3e19,cps:1.25e14},
-  {id:"engine",ico:"⚙️",name:"Infinite Slot Engine",base:8e20, cps:1.2e15},
-  {id:"realm", ico:"🔮",name:"Reality Slot Loom",  base:2e22,  cps:1.15e16},
-  {id:"omega", ico:"♾️",name:"Omega Jackpot Net",   base:5e23,  cps:1.1e17},
-  {id:"singul",ico:"🕛",name:"Singularity Slots",  base:1.3e25,cps:1.05e18},
-  {id:"god",   ico:"🌞",name:"Slot Godhead",       base:3.5e26,cps:1e19},
+  {id:"cat",   ico:"🪙",name:"Coin Value",     base:15,    eff:{win:1.12}},
+  {id:"bot",   ico:"🎰",name:"Reel Power",     base:120,   eff:{win:1.10}},
+  {id:"lounge",ico:"🍒",name:"Loaded Symbols", base:1100,  eff:{sym:1.07}},
+  {id:"limit", ico:"🎟️",name:"Table Limit",    base:5000,  eff:{bet:2.2}},
+  {id:"online",ico:"🍀",name:"Lucky Charms",   base:30000, eff:{luck:5}},
+  {id:"vault", ico:"⚡",name:"Reel Speed",     base:200000,eff:{speed:0.96}},
+  {id:"city",  ico:"🎁",name:"Bonus Bait",     base:1.5e6, eff:{bonus:0.7}},
+  {id:"floor", ico:"💎",name:"Premium Reels",  base:1.2e7, eff:{win:1.10}},
+  {id:"orbit", ico:"🃏",name:"Wild Magnet",    base:1e8,   eff:{wild:0.7}},
+  {id:"galaxy",ico:"💰",name:"Fortune Engine", base:9e8,   eff:{win:1.11}},
+  {id:"nebula",ico:"7️⃣",name:"Jackpot Tuning", base:8e9,   eff:{jack:0.6}},
+  {id:"hole",  ico:"🪙",name:"Coin Foundry",   base:7e10,  eff:{win:1.11}},
+  {id:"multi", ico:"💠",name:"Payline Mint",   base:6e11,  eff:{win:1.12}},
+  {id:"deity", ico:"💎",name:"Mint Reels",     base:6e12,  eff:{win:1.12}},
+  {id:"quantum",ico:"⚛️",name:"Quantum Reels",  base:6e13,  eff:{win:1.13}},
+  {id:"dimen", ico:"🌀",name:"Warp Payouts",   base:6e14,  eff:{win:1.13}},
+  {id:"cartel",ico:"🎴",name:"Cartel Cut",     base:6e15,  eff:{win:1.14}},
+  {id:"engine",ico:"⚙️",name:"Payout Engine",  base:6e16,  eff:{win:1.14}},
+  {id:"realm", ico:"🔮",name:"Reality Reels",  base:6e17,  eff:{win:1.15}},
+  {id:"omega", ico:"♾️",name:"Omega Payline",   base:6e18,  eff:{win:1.15}},
+  {id:"singul",ico:"🕛",name:"Singularity Pay",base:6e19,  eff:{win:1.16}},
+  {id:"god",   ico:"🌞",name:"Godhead Reels",  base:6e20,  eff:{win:1.16}},
 ];
 function genCost(g,o){return Math.ceil(g.base*Math.pow(1.16,o));}
 function genCostN(g,o,n){let c=0;for(let i=0;i<n;i++)c+=genCost(g,o+i);return c;}
@@ -603,22 +602,36 @@ function buffMult(){let m=1;const now=Date.now();for(const k in buffs){if(buffs[
 function luckBuff(){const now=Date.now();return (buffs.lucky&&buffs.lucky.until>now)?buffs.lucky.luck:0;}
 
 /* ============ derived ============ */
-function luckPct(){let l=0;for(const u of UP)if(S.ups[u.id]&&u.eff.luck)l+=u.eff.luck;l+=(S.vips.v_luck||0)*5;l+=luckBuff();return l;}
+function slotLvl(id){return S.gens[id]||0;}
+function slotEff(key){let m=1;for(const g of GENS)if(g.eff[key]){const l=slotLvl(g.id);if(l)m*=Math.pow(g.eff[key],l);}return m;} // multiplicative slot upgrades
+function slotAdd(key){let a=0;for(const g of GENS)if(g.eff[key])a+=slotLvl(g.id)*g.eff[key];return a;} // additive slot upgrades
+function slotWin(){return slotEff('win')*slotEff('sym');} // all win multipliers from the slot upgrades
+function luckPct(){let l=0;for(const u of UP)if(S.ups[u.id]&&u.eff.luck)l+=u.eff.luck;l+=(S.vips.v_luck||0)*5;l+=slotAdd('luck');l+=luckBuff();return l;}
 function chipMult(){return 1+S.chips*0.02;}
-function payMult(){let m=1;for(const u of UP)if(S.ups[u.id]&&u.eff.payMult)m*=u.eff.payMult;m*=1+(S.vips.v_pay||0)*0.25;m*=chipMult();m*=achMult();m*=buffMult();return m;}
-function genMultFor(id){let m=1;for(const u of UP)if(S.ups[u.id]&&u.eff.gen){if(u.eff.gen==="all"||u.eff.gen===id)m*=u.eff.mult;}m*=1+(S.vips.v_gen||0)*0.2;m*=chipMult();m*=achMult();m*=buffMult();return m;}
+function starMult(){return (1+(S.stars||0)*0.5)*(1+((S.asc&&S.asc.asc_gain)||0)*0.5);} // Ascension Star Shards
+// all win multipliers (slot upgrades + legacy upgrade effects + vip/chip/ach/star/buffs)
+function payMult(){let m=1;for(const u of UP)if(S.ups[u.id]&&(u.eff.payMult||u.eff.gen))m*=(u.eff.payMult||u.eff.mult);m*=1+(S.vips.v_pay||0)*0.25;m*=chipMult();m*=achMult();m*=buffMult();m*=starMult();m*=slotWin();return m;}
 function reelCount(){let r=3;for(const u of UP)if(S.ups[u.id]&&u.eff.reels)r=Math.max(r,u.eff.reels);return r;}
 function rowCount(){let r=Math.max(1,devRows);for(const u of UP)if(S.ups[u.id]&&u.eff.rows)r=Math.max(r,u.eff.rows);return r;}
-function autoInterval(){let b=1200;for(const u of UP)if(S.ups[u.id]&&u.eff.autoSpeed)b*=u.eff.autoSpeed;b*=Math.pow(0.85,S.vips.v_auto||0);return Math.max(400,b);}
+function autoInterval(){let b=1200;for(const u of UP)if(S.ups[u.id]&&u.eff.autoSpeed)b*=u.eff.autoSpeed;b*=Math.pow(0.85,S.vips.v_auto||0);b*=slotEff('speed');return Math.max(200,b);}
 function jackpotBoost(){return S.ups.u_jack?2:1;}
 function megaBoost(){return S.ups.u_mega?3:1;}
-function globalMult(){return chipMult()*achMult()*buffMult();}
-function cps(){let t=0;for(const g of GENS){const n=S.gens[g.id]||0;if(n>0)t+=n*g.cps*genMultFor(g.id);}return t;}
+function tableLimitMult(){return slotEff('bet');}
+function globalMult(){return chipMult()*achMult()*buffMult()*starMult();}
+const BASE_RTP=1.0;
+function sizeFactor(){return 1+Math.log2(Math.max(1,waysCount()))*0.12;} // bigger grids → more ways → more income
+// idle income estimate per second from auto-spin. Wealth-INDEPENDENT (depends on bet+upgrades, both gated) → no runaway.
+function cps(){const bet=currentBet();const gross=bet*BASE_RTP*payMult()*sizeFactor();const net=gross-bet;return net>0?net/(autoInterval()/1000):0;}
 
 /* ============ reel weights ============ */
 function weightedSymbols(){
   const l=luckPct()/100;
-  return SYMBOLS.map(s=>{let w=s.weight;const rb=(s.three||0)/3;w*=1+l*Math.log2(rb+1)*0.6;if(s.jackpot)w*=jackpotBoost();if(s.mega)w*=megaBoost();return{s,w};});
+  return SYMBOLS.map(s=>{let w=s.weight;const rb=(s.three||0)/3;w*=1+l*Math.log2(rb+1)*0.6;
+    if(s.jackpot)w*=jackpotBoost()*(1+slotAdd('jack'));
+    if(s.mega)w*=megaBoost()*(1+slotAdd('jack'));
+    if(s.wild)w*=(1+slotAdd('wild'));
+    if(s.scatter)w*=(1+slotAdd('bonus'));
+    return{s,w};});
 }
 function pickSymbol(pool,tw){let r=Math.random()*tw;for(const e of pool){r-=e.w;if(r<=0)return e.s;}return pool[pool.length-1].s;}
 
@@ -687,7 +700,9 @@ function waysCount(){return Math.pow(rowCount(),reelCount());}
 function evaluate(grid){
   const rc=grid.length,rows=grid[0].length,bet=currentBet();
   const mult=payMult()*(S.freeSpins>0?(S.freeMult||3):1);
-  const cap=cps()*60+S.coins*0.02+bet*2+2000;
+  // Cap a single spin to ~45s of idle income + 150x bet. Both are upgrade/bet-gated (NOT wealth-scaled),
+  // so wins can't compound your bankroll — progression comes from buying slot upgrades.
+  const cap=cps()*45+bet*150+8000;
   let scat=0;grid.forEach(col=>col.forEach(s=>{if(s&&s.scatter)scat++;}));
   // sunset multiplier wilds — active during free spins
   let wildMult=1;
@@ -979,15 +994,24 @@ function updateNotifyDots(){
   const pendAch=ACH.some(a=>!S.ach[a.id]&&a.c(S));
   document.querySelector('.tab[data-tab="ach"]').classList.toggle("notify",pendAch);
 }
+function slotEffDesc(g,lv){const e=g.eff;
+  if(e.win)return `+${Math.round((e.win-1)*100)}% all wins / lvl${lv?` · now <b style="color:var(--gold)">×${fmt(Math.pow(e.win,lv))}</b>`:""}`;
+  if(e.sym)return `+${Math.round((e.sym-1)*100)}% symbol payouts / lvl${lv?` · ×${fmt(Math.pow(e.sym,lv))}`:""}`;
+  if(e.luck)return `+${e.luck}% Luck / lvl${lv?` · <b style="color:var(--neon)">+${e.luck*lv}%</b>`:""}`;
+  if(e.speed)return `Auto-spin ${Math.round((1-e.speed)*100)}% faster / lvl`;
+  if(e.bonus)return `🎁 Scatter appears more often / lvl`;
+  if(e.wild)return `🃏 Wild appears more often / lvl`;
+  if(e.jack)return `7️⃣🐃 Jackpot symbols appear more / lvl`;
+  if(e.bet)return `Bet bigger — table limit ×${e.bet} / lvl${lv?` · ×${fmt(Math.pow(e.bet,lv))}`:""}`;
+  return "";}
 function renderGens(){const list=document.getElementById("genList");list.innerHTML="";
-  for(let i=0;i<GENS.length;i++){const g=GENS[i];const o=S.gens[g.id]||0;
-    const unlocked=i===0||(S.gens[GENS[i-1].id]||0)>=1||o>0;
+  for(let i=0;i<GENS.length;i++){const g=GENS[i];const lv=S.gens[g.id]||0;
+    const unlocked=i===0||(S.gens[GENS[i-1].id]||0)>=1||lv>0;
     const el=document.createElement("div");el.className="item";el.setAttribute("data-gen",g.id);
-    if(!unlocked){el.classList.add("locked");el.innerHTML=`<div class="ico">🔒</div><div class="body"><div class="name">???</div><div class="desc">Buy a ${GENS[i-1].name} to reveal.</div></div>`;list.appendChild(el);continue;}
-    const each=g.cps*genMultFor(g.id);
-    el.innerHTML=`<div class="ico">${g.ico}</div><div class="body"><div class="name">${g.name} ${o?`<span class="owned">×${o}</span>`:""}</div>
-      <div class="desc">🎰 <b style="color:var(--green)">+${fmt(each)}/s</b> each${o?` · <span style="color:var(--gold)">${fmt(each*o)}/s</span> total`:""}</div></div>
-      <div class="right"><div class="cost">${fmt(genCost(g,o))}</div></div>`;
+    if(!unlocked){el.classList.add("locked");el.innerHTML=`<div class="ico">🔒</div><div class="body"><div class="name">???</div><div class="desc">Level up ${GENS[i-1].name} to unlock.</div></div>`;list.appendChild(el);continue;}
+    el.innerHTML=`<div class="ico">${g.ico}</div><div class="body"><div class="name">${g.name} ${lv?`<span class="owned">Lv ${lv}</span>`:""}</div>
+      <div class="desc">${slotEffDesc(g,lv)}</div></div>
+      <div class="right"><div class="cost">${fmt(genCost(g,lv))}</div></div>`;
     el.onclick=()=>buyGen(g.id);list.appendChild(el);}
   refreshAfford();}
 function buyGen(id){const g=GENS.find(x=>x.id===id);const o=S.gens[id]||0;let n,cost;
@@ -1113,7 +1137,7 @@ function openSettings(){const seg=(cur,opts)=>opts.map(o=>`<button data-v="${o.v
 document.getElementById("gearBtn").onclick=openSettings;document.getElementById("settingsBtn").onclick=openSettings;
 
 /* ============ save / load ============ */
-const KEY="neonSpinSave_v3",SKEY="neonSpinSet_v2";
+const KEY="neonSpinSave_v4",SKEY="neonSpinSet_v2";
 function snapshot(){S.savedAt=Date.now();return{S,SET,goals:GOALS.map(g=>g.done),endingShown,buffs};}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(snapshot()));}catch(e){}}
 function saveSettings(){try{localStorage.setItem(SKEY,JSON.stringify(SET));}catch(e){}}
