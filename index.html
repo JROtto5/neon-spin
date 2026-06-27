@@ -10,9 +10,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Chakra+Petch:wght@500;600;700&family=Audiowide&family=Bungee&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#08050f; --panel:#160a26; --panel2:#1f0f38; --panel3:#2a1450;
-    --neon:#ff2bd6; --neon2:#00e5ff; --gold:#ffd23f; --green:#33ff99;
-    --text:#f3e9ff; --dim:#9b86c4; --bad:#ff5577; --line:#3a1c5e;
+    /* neutral near-black surfaces (kills the purple-soup AI look) */
+    --bg:#0a0b0f; --panel:#12141a; --panel2:#161922; --panel3:#1e222e;
+    /* ONE brand accent (magenta) + gold reserved for rewards; secondary used sparingly */
+    --neon:#ff3da0; --neon2:#3fd0e6; --gold:#ffc24d; --green:#43d98a;
+    --text:#eef1f6; --dim:#8a93a3; --bad:#ff5d6c; --line:#252a36;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
@@ -20,15 +22,10 @@
     font-family:'Rajdhani','Segoe UI',system-ui,sans-serif;
     font-size:15.5px;
     background:
-      radial-gradient(900px 500px at 15% 0%, rgba(255,43,214,.10), transparent 60%),
-      radial-gradient(900px 500px at 85% 10%, rgba(0,229,255,.10), transparent 60%),
-      radial-gradient(1200px 800px at 50% -10%, #2a0d4d 0%, var(--bg) 60%),
-      linear-gradient(0deg, rgba(0,229,255,.025) 1px, transparent 1px) 0 0 / 100% 42px,
-      linear-gradient(90deg, rgba(255,43,214,.025) 1px, transparent 1px) 0 0 / 42px 100%;
+      radial-gradient(1100px 620px at 50% -18%, #17151f 0%, var(--bg) 55%),
+      var(--bg);
     color:var(--text); overflow-x:hidden; -webkit-font-smoothing:antialiased;
-    animation:bgdrift 24s linear infinite;
   }
-  @keyframes bgdrift{from{background-position:0 0,0 0,0 0,0 0,0 0}to{background-position:0 0,0 0,0 0,0 42px,42px 0}}
   /* film-grain texture overlay for depth (inline SVG noise, no asset request) */
   body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;mix-blend-mode:overlay;opacity:.06;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
@@ -40,17 +37,15 @@
   .wrap{max-width:1240px;margin:0 auto;padding:14px 14px 70px}
   header{text-align:center;margin-bottom:10px;position:relative}
   header h1{
-    font-size:clamp(26px,5vw,50px);
-    background:linear-gradient(90deg,var(--neon),var(--gold),var(--neon2));
-    -webkit-background-clip:text;background-clip:text;color:transparent;
-    text-shadow:0 0 30px rgba(255,43,214,.35);animation:hue 9s linear infinite;
+    font-size:clamp(24px,4.6vw,44px);letter-spacing:1px;color:var(--text);
+    text-shadow:0 0 18px rgba(255,61,160,.35);
   }
-  @keyframes hue{to{filter:hue-rotate(360deg)}}
-  .sub{color:var(--dim);font-size:12.5px;margin-top:2px}
-  .news{height:22px;overflow:hidden;text-align:center;color:var(--neon2);font-size:13px;font-style:italic;margin-top:4px}
-  .gearbtn{position:absolute;top:0;right:0;background:#1a0d30;border:1px solid var(--line);color:var(--text);
-    width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:18px}
-  .gearbtn:hover{border-color:var(--neon2)}
+  header h1 .n{color:var(--neon)}header h1 .s{color:var(--gold)}
+  .sub{color:var(--dim);font-size:12.5px;margin-top:3px}
+  .news{height:22px;overflow:hidden;text-align:center;color:var(--neon2);font-size:12.5px;font-style:italic;margin-top:4px;opacity:.85}
+  .gearbtn{position:absolute;top:0;right:0;background:var(--panel2);border:1px solid var(--line);color:var(--dim);
+    width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:18px;transition:.15s}
+  .gearbtn:hover{border-color:var(--neon);color:var(--text)}
 
   .bankbar{
     display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:8px 0 12px;
@@ -58,7 +53,7 @@
   @media(max-width:760px){.bankbar{grid-template-columns:repeat(3,1fr)}}
   @media(max-width:420px){.bankbar{grid-template-columns:repeat(2,1fr)}}
   .stat{text-align:center;padding:10px 6px;border-radius:16px;position:relative;overflow:hidden;
-    background:linear-gradient(180deg,rgba(42,20,76,.6),rgba(20,9,36,.66));border:1px solid rgba(123,60,160,.35);
+    background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 6px 20px rgba(0,0,0,.3);
     backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:transform .15s,border-color .15s}
   .stat:hover{transform:translateY(-2px);border-color:var(--neon2)}
@@ -78,24 +73,18 @@
 
   .grid{display:grid;grid-template-columns:1.12fr .88fr;gap:16px}
   @media(max-width:920px){.grid{grid-template-columns:1fr}}
-  .card{background:linear-gradient(180deg,rgba(42,20,76,.66),rgba(20,9,36,.72));border:1px solid rgba(123,60,160,.38);
-    border-radius:22px;padding:18px;box-shadow:0 10px 44px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06),0 0 30px rgba(123,0,255,.06);
-    backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2)}
-  .card h2{font-size:14px;text-transform:uppercase;letter-spacing:2px;color:var(--neon2);margin-bottom:12px;
-    display:flex;justify-content:space-between;align-items:center;font-family:'Orbitron',sans-serif;
-    text-shadow:0 0 14px rgba(0,229,255,.35)}
+  .card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+    border-radius:16px;padding:16px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 1px 2px rgba(0,0,0,.4), 0 14px 32px -14px rgba(0,0,0,.55)}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:1.8px;color:var(--dim);margin-bottom:12px;
+    display:flex;justify-content:space-between;align-items:center;font-family:'Chakra Petch',sans-serif}
 
-  .machine{position:relative;border-radius:22px;padding:20px 16px 16px;text-align:center;
-    background:
-      radial-gradient(130% 90% at 50% 0%, #3a1566 0%, #160a2c 60%, #0c0520 100%);
-    border:2px solid transparent;
-    background-clip:padding-box;
-    box-shadow:0 0 50px rgba(255,43,214,.22),inset 0 0 50px rgba(0,0,0,.55),0 14px 40px rgba(0,0,0,.5)}
-  .machine::before{content:'';position:absolute;inset:-2px;border-radius:22px;padding:2px;z-index:0;
-    background:linear-gradient(135deg,var(--neon),var(--gold),var(--neon2),var(--neon));background-size:300% 300%;
-    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
-    animation:frameglow 6s linear infinite}
-  @keyframes frameglow{to{background-position:300% 0}}
+  .machine{position:relative;border-radius:18px;padding:18px 16px 16px;text-align:center;
+    background:radial-gradient(130% 90% at 50% 0%, #1b1826 0%, #12131b 60%, #0c0d13 100%);
+    border:1px solid var(--line);
+    box-shadow:inset 0 0 40px rgba(0,0,0,.5), 0 16px 40px -14px rgba(0,0,0,.6)}
+  .machine::before{content:'';position:absolute;inset:0;border-radius:18px;z-index:0;pointer-events:none;
+    box-shadow:inset 0 0 0 1px rgba(255,194,77,.18), inset 0 1px 0 rgba(255,255,255,.05)}
   .machine>*{position:relative;z-index:1}
   .marquee{font-family:'Orbitron';font-weight:900;letter-spacing:3px;font-size:13px;margin-bottom:12px;
     color:var(--gold);text-shadow:0 0 12px var(--gold),0 0 26px rgba(255,160,0,.5);text-transform:uppercase}
@@ -119,10 +108,10 @@
 
   .betrow{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:10px}
   .betrow .label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
-  .chip{background:#2a1450;border:1px solid #5a2c8a;color:var(--text);padding:5px 9px;border-radius:9px;cursor:pointer;font-weight:700;font-size:12.5px;transition:.12s}
+  .chip{background:#2a1450;border:1px solid #33384a;color:var(--text);padding:5px 9px;border-radius:9px;cursor:pointer;font-weight:700;font-size:12.5px;transition:.12s}
   .chip:hover{border-color:var(--neon2)}
   .chip.active{background:var(--neon);border-color:var(--neon);color:#190a2a;box-shadow:0 0 14px rgba(255,43,214,.5)}
-  .chip.maxbet{background:#1a0d30;color:var(--gold);font-family:'Chakra Petch'}.chip.maxbet.active{background:var(--gold);color:#190a2a}
+  .chip.maxbet{background:#14161d;color:var(--gold);font-family:'Chakra Petch'}.chip.maxbet.active{background:var(--gold);color:#190a2a}
   .chip.cant{opacity:.38}
 
   .btn{border:none;border-radius:14px;cursor:pointer;font-weight:800;letter-spacing:.5px;padding:13px 20px;font-size:16px;color:#190a2a;
@@ -147,16 +136,16 @@
   @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px) rotate(-2deg)}40%{transform:translateX(8px) rotate(2deg)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
 
   .tabs{display:flex;gap:5px;margin-bottom:11px;flex-wrap:wrap}
-  .tab{flex:1;min-width:70px;text-align:center;padding:8px 4px;border-radius:9px;background:#1a0d30;border:1px solid var(--line);
+  .tab{flex:1;min-width:70px;text-align:center;padding:8px 4px;border-radius:9px;background:#14161d;border:1px solid var(--line);
     cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);position:relative}
   .tab.active{background:var(--neon);color:#190a2a;border-color:var(--neon)}
   .tab .dot{position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);display:none}
   .tab.notify .dot{display:block}
   .list{display:flex;flex-direction:column;gap:8px;max-height:600px;overflow-y:auto;padding-right:4px}
   .list::-webkit-scrollbar{width:8px}.list::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
-  .item{display:flex;align-items:center;gap:12px;background:#1a0d30;border:1px solid var(--line);border-radius:12px;
+  .item{display:flex;align-items:center;gap:12px;background:#14161d;border:1px solid var(--line);border-radius:12px;
     padding:9px 12px;cursor:pointer;transition:.12s;position:relative;overflow:hidden;min-height:58px}
-  .item:hover:not(.locked):not(.maxed){border-color:var(--neon2);background:#22113f}
+  .item:hover:not(.locked):not(.maxed){border-color:var(--neon2);background:#1b1e27}
   .item.afford{border-color:#4a2c7a}.item.cant{opacity:.55}
   .item.locked{opacity:.4;cursor:not-allowed;filter:grayscale(.6)}
   .item.maxed{opacity:.85;cursor:default;border-color:var(--green)}
@@ -169,11 +158,11 @@
   .item .cost{font-weight:800;color:var(--gold);font-size:14px;font-family:'Orbitron'}
   .item .cost.no{color:var(--bad)}.item .owned{font-size:11px;color:var(--neon2);font-weight:700}
   .qtyrow{display:flex;gap:6px;justify-content:flex-end;margin-bottom:8px;align-items:center}
-  .qtybtn{font-size:11px;padding:4px 9px;border-radius:8px;background:#1a0d30;border:1px solid var(--line);color:var(--dim);cursor:pointer;font-weight:700}
+  .qtybtn{font-size:11px;padding:4px 9px;border-radius:8px;background:#14161d;border:1px solid var(--line);color:var(--dim);cursor:pointer;font-weight:700}
   .qtybtn.active{background:var(--neon2);color:#06030d;border-color:var(--neon2)}
 
   .milestone{font-size:12px;color:var(--dim);margin-top:10px;text-align:center}
-  .barouter{height:9px;background:#1a0d30;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin-top:6px}
+  .barouter{height:9px;background:#14161d;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin-top:6px}
   .barinner{height:100%;width:0;background:linear-gradient(90deg,var(--neon),var(--gold));transition:width .3s}
 
   /* achievements grid */
@@ -214,18 +203,18 @@
   .modal p{color:var(--text);margin:9px 0;line-height:1.5;font-size:14px}
   .modal .row{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
   .setline{display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line);font-size:14px}
-  .seg{display:flex;gap:4px}.seg button{font-size:12px;padding:5px 10px;border-radius:8px;background:#1a0d30;border:1px solid var(--line);color:var(--dim);cursor:pointer}
+  .seg{display:flex;gap:4px}.seg button{font-size:12px;padding:5px 10px;border-radius:8px;background:#14161d;border:1px solid var(--line);color:var(--dim);cursor:pointer}
   .seg button.on{background:var(--neon2);color:#06030d;border-color:var(--neon2)}
 
   .footer{text-align:center;color:var(--dim);font-size:12px;margin-top:22px}
   .linkbtn{color:var(--neon2);cursor:pointer;text-decoration:underline;background:none;border:none;font-size:12px}
-  kbd{background:#2a1450;border:1px solid #5a2c8a;border-radius:5px;padding:1px 6px;font-size:11px}
+  kbd{background:#2a1450;border:1px solid #33384a;border-radius:5px;padding:1px 6px;font-size:11px}
   .ver{color:#5a4080;font-size:11px}
 
   /* ---- clean paytable ---- */
   .ptrow{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;
-    background:linear-gradient(90deg,rgba(30,14,56,.6),rgba(20,9,36,.5));border:1px solid var(--line);border-radius:13px;padding:7px 12px;transition:.12s}
-  .ptrow:hover{border-color:#5a2c8a;background:linear-gradient(90deg,rgba(42,20,76,.7),rgba(26,12,46,.6))}
+    background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:7px 12px;transition:.12s}
+  .ptrow:hover{border-color:#3a4154;background:var(--panel2)}
   .ptrow .syms{display:flex;gap:3px;flex:0 0 auto}
   .tok{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:19px;
     background:radial-gradient(circle at 50% 35%,#33195e,#140a26);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),0 2px 5px rgba(0,0,0,.5)}
@@ -241,7 +230,7 @@
   /* ---- unique cosmic prestige UI ---- */
   #tab-vip{position:relative}
   .vhero{position:relative;border-radius:18px;overflow:hidden;padding:18px 16px;margin-bottom:14px;text-align:center;
-    background:radial-gradient(120% 140% at 50% -20%, #3a1170 0%, #15082b 70%);border:1px solid #5a2c8a;
+    background:radial-gradient(120% 140% at 50% -20%, #3a1170 0%, #15082b 70%);border:1px solid #33384a;
     box-shadow:0 0 40px rgba(123,0,255,.25) inset, 0 0 24px rgba(0,229,255,.12)}
   .vhero::before{content:'';position:absolute;inset:-50%;background:
     radial-gradient(2px 2px at 20% 30%,#fff,transparent),radial-gradient(2px 2px at 70% 60%,#fff,transparent),
@@ -297,7 +286,7 @@
 <div class="wrap">
   <header>
     <button class="gearbtn" id="gearBtn" title="Settings">⚙️</button>
-    <h1>◆ NEON SPIN ◆</h1>
+    <h1>◆ <span class="n">NEON</span> <span class="s">SPIN</span> ◆</h1>
     <div class="sub">Idle Slots Empire — from one lucky quarter to the Infinite Jackpot <span class="ver" id="ver"></span></div>
     <div class="news" id="news"></div>
   </header>
@@ -466,31 +455,33 @@ let devRows=0; // ?rows=N preview override
 /* ============ generators ============ */
 // BUILD = repeatable SLOT UPGRADES (improve the machine itself). S.gens[id] = level. No passive income —
 // coins come only from spinning; auto-spin is your idle. Bets are gated by Table Limit so wealth can't runaway.
+// win/sym effects are ADDITIVE (+X% per level) so they can't compound into exponential runaway.
+// Table Limit (bet) is multiplicative but has a STEEP cost (mult 3.4 > x2 benefit) → polynomial pacing.
 const GENS=[
-  {id:"cat",   ico:"🪙",name:"Coin Value",     base:15,    eff:{win:1.12}},
-  {id:"bot",   ico:"🎰",name:"Reel Power",     base:120,   eff:{win:1.10}},
-  {id:"lounge",ico:"🍒",name:"Loaded Symbols", base:1100,  eff:{sym:1.07}},
-  {id:"limit", ico:"🎟️",name:"Table Limit",    base:5000,  eff:{bet:2.2}},
-  {id:"online",ico:"🍀",name:"Lucky Charms",   base:30000, eff:{luck:5}},
-  {id:"vault", ico:"⚡",name:"Reel Speed",     base:200000,eff:{speed:0.96}},
-  {id:"city",  ico:"🎁",name:"Bonus Bait",     base:1.5e6, eff:{bonus:0.7}},
-  {id:"floor", ico:"💎",name:"Premium Reels",  base:1.2e7, eff:{win:1.10}},
-  {id:"orbit", ico:"🃏",name:"Wild Magnet",    base:1e8,   eff:{wild:0.7}},
-  {id:"galaxy",ico:"💰",name:"Fortune Engine", base:9e8,   eff:{win:1.11}},
-  {id:"nebula",ico:"7️⃣",name:"Jackpot Tuning", base:8e9,   eff:{jack:0.6}},
-  {id:"hole",  ico:"🪙",name:"Coin Foundry",   base:7e10,  eff:{win:1.11}},
-  {id:"multi", ico:"💠",name:"Payline Mint",   base:6e11,  eff:{win:1.12}},
-  {id:"deity", ico:"💎",name:"Mint Reels",     base:6e12,  eff:{win:1.12}},
-  {id:"quantum",ico:"⚛️",name:"Quantum Reels",  base:6e13,  eff:{win:1.13}},
-  {id:"dimen", ico:"🌀",name:"Warp Payouts",   base:6e14,  eff:{win:1.13}},
-  {id:"cartel",ico:"🎴",name:"Cartel Cut",     base:6e15,  eff:{win:1.14}},
-  {id:"engine",ico:"⚙️",name:"Payout Engine",  base:6e16,  eff:{win:1.14}},
-  {id:"realm", ico:"🔮",name:"Reality Reels",  base:6e17,  eff:{win:1.15}},
-  {id:"omega", ico:"♾️",name:"Omega Payline",   base:6e18,  eff:{win:1.15}},
-  {id:"singul",ico:"🕛",name:"Singularity Pay",base:6e19,  eff:{win:1.16}},
-  {id:"god",   ico:"🌞",name:"Godhead Reels",  base:6e20,  eff:{win:1.16}},
+  {id:"cat",   ico:"🪙",name:"Coin Value",     base:15,    eff:{win:0.20}},
+  {id:"limit", ico:"🎟️",name:"Table Limit",    base:400,   mult:3.4, eff:{bet:2}},
+  {id:"bot",   ico:"🎰",name:"Reel Power",     base:1500,  eff:{win:0.18}},
+  {id:"lounge",ico:"🍒",name:"Loaded Symbols", base:9000,  eff:{sym:0.15}},
+  {id:"online",ico:"🍀",name:"Lucky Charms",   base:40000, eff:{luck:4}},
+  {id:"vault", ico:"⚡",name:"Reel Speed",     base:120000,mult:1.4, eff:{speed:0.94}},
+  {id:"city",  ico:"🎁",name:"Bonus Bait",     base:700000,mult:1.3, eff:{bonus:0.5}},
+  {id:"floor", ico:"💎",name:"Premium Reels",  base:5e6,   eff:{win:0.20}},
+  {id:"orbit", ico:"🃏",name:"Wild Magnet",    base:4e7,   mult:1.3, eff:{wild:0.5}},
+  {id:"galaxy",ico:"💰",name:"Fortune Engine", base:3e8,   eff:{win:0.22}},
+  {id:"nebula",ico:"7️⃣",name:"Jackpot Tuning", base:2e9,   mult:1.35,eff:{jack:0.5}},
+  {id:"hole",  ico:"🪙",name:"Coin Foundry",   base:2e10,  eff:{win:0.24}},
+  {id:"multi", ico:"💠",name:"Payline Mint",   base:1.5e11,eff:{win:0.26}},
+  {id:"deity", ico:"💎",name:"Mint Reels",     base:1e12,  eff:{win:0.28}},
+  {id:"quantum",ico:"⚛️",name:"Quantum Reels",  base:8e12,  eff:{win:0.30}},
+  {id:"dimen", ico:"🌀",name:"Warp Payouts",   base:6e13,  eff:{win:0.34}},
+  {id:"cartel",ico:"🎴",name:"Cartel Cut",     base:5e14,  eff:{win:0.38}},
+  {id:"engine",ico:"⚙️",name:"Payout Engine",  base:4e15,  eff:{win:0.42}},
+  {id:"realm", ico:"🔮",name:"Reality Reels",  base:3e16,  eff:{win:0.48}},
+  {id:"omega", ico:"♾️",name:"Omega Payline",   base:2e17,  eff:{win:0.55}},
+  {id:"singul",ico:"🕛",name:"Singularity Pay",base:2e18,  eff:{win:0.65}},
+  {id:"god",   ico:"🌞",name:"Godhead Reels",  base:1e19,  eff:{win:0.8}},
 ];
-function genCost(g,o){return Math.ceil(g.base*Math.pow(1.16,o));}
+function genCost(g,o){return Math.ceil(g.base*Math.pow(g.mult||1.16,o));}
 function genCostN(g,o,n){let c=0;for(let i=0;i<n;i++)c+=genCost(g,o+i);return c;}
 function maxBuy(g,o,coins){let n=0,c=0;while(true){const x=genCost(g,o+n);if(c+x>coins)break;c+=x;n++;if(n>1e5)break;}return{n,cost:c};}
 
@@ -605,7 +596,7 @@ function luckBuff(){const now=Date.now();return (buffs.lucky&&buffs.lucky.until>
 function slotLvl(id){return S.gens[id]||0;}
 function slotEff(key){let m=1;for(const g of GENS)if(g.eff[key]){const l=slotLvl(g.id);if(l)m*=Math.pow(g.eff[key],l);}return m;} // multiplicative slot upgrades
 function slotAdd(key){let a=0;for(const g of GENS)if(g.eff[key])a+=slotLvl(g.id)*g.eff[key];return a;} // additive slot upgrades
-function slotWin(){return slotEff('win')*slotEff('sym');} // all win multipliers from the slot upgrades
+function slotWin(){return 1+slotAdd('win')+slotAdd('sym');} // ADDITIVE win bonus (no exponential compounding)
 function luckPct(){let l=0;for(const u of UP)if(S.ups[u.id]&&u.eff.luck)l+=u.eff.luck;l+=(S.vips.v_luck||0)*5;l+=slotAdd('luck');l+=luckBuff();return l;}
 function chipMult(){return 1+S.chips*0.02;}
 function starMult(){return (1+(S.stars||0)*0.5)*(1+((S.asc&&S.asc.asc_gain)||0)*0.5);} // Ascension Star Shards
@@ -942,7 +933,7 @@ window.addEventListener("pointerdown",()=>{if(SET.music)updateMusic();},{once:tr
 /* ============ idle loop ============ */
 let lastTick=Date.now();
 function tick(){const now=Date.now();const dt=(now-lastTick)/1000;lastTick=now;
-  S.playtime+=dt;const inc=cps()*dt;if(inc>0){S.coins+=inc;S.totalEarned+=inc;S.runEarned+=inc;}
+  S.playtime+=dt; // NO passive income — coins come only from actual spins (auto-spin does real spins)
   updateStats();checkAchievements();checkEnding();maybeGolden(dt);}
 setInterval(tick,100);
 
@@ -1014,20 +1005,20 @@ function updateNotifyDots(){
   document.querySelector('.tab[data-tab="ach"]').classList.toggle("notify",pendAch);
 }
 function slotEffDesc(g,lv){const e=g.eff;
-  if(e.win)return `+${Math.round((e.win-1)*100)}% all wins / lvl${lv?` · now <b style="color:var(--gold)">×${fmt(Math.pow(e.win,lv))}</b>`:""}`;
-  if(e.sym)return `+${Math.round((e.sym-1)*100)}% symbol payouts / lvl${lv?` · ×${fmt(Math.pow(e.sym,lv))}`:""}`;
+  if(e.win)return `+${Math.round(e.win*100)}% all wins / lvl${lv?` · <b style="color:var(--gold)">+${Math.round(e.win*lv*100)}%</b>`:""}`;
+  if(e.sym)return `+${Math.round(e.sym*100)}% symbol payouts / lvl${lv?` · <b style="color:var(--gold)">+${Math.round(e.sym*lv*100)}%</b>`:""}`;
   if(e.luck)return `+${e.luck}% Luck / lvl${lv?` · <b style="color:var(--neon)">+${e.luck*lv}%</b>`:""}`;
-  if(e.speed)return `Auto-spin ${Math.round((1-e.speed)*100)}% faster / lvl`;
+  if(e.speed)return `Auto-spin faster / lvl`;
   if(e.bonus)return `🎁 Scatter appears more often / lvl`;
   if(e.wild)return `🃏 Wild appears more often / lvl`;
   if(e.jack)return `7️⃣🐃 Jackpot symbols appear more / lvl`;
-  if(e.bet)return `Bet bigger — table limit ×${e.bet} / lvl${lv?` · ×${fmt(Math.pow(e.bet,lv))}`:""}`;
+  if(e.bet)return `<b style="color:var(--gold)">Bet bigger — ×2 table limit / lvl</b>${lv?` · max bet ×${fmt(Math.pow(2,lv))}`:""}`;
   return "";}
 function renderGens(){const list=document.getElementById("genList");list.innerHTML="";
   for(let i=0;i<GENS.length;i++){const g=GENS[i];const lv=S.gens[g.id]||0;
-    const unlocked=i===0||(S.gens[GENS[i-1].id]||0)>=1||lv>0;
+    const unlocked=i<=2||lv>0||S.totalEarned>=g.base*0.25; // reveal as you earn — Table Limit shows early
     const el=document.createElement("div");el.className="item";el.setAttribute("data-gen",g.id);
-    if(!unlocked){el.classList.add("locked");el.innerHTML=`<div class="ico">🔒</div><div class="body"><div class="name">???</div><div class="desc">Level up ${GENS[i-1].name} to unlock.</div></div>`;list.appendChild(el);continue;}
+    if(!unlocked){el.classList.add("locked");el.innerHTML=`<div class="ico">🔒</div><div class="body"><div class="name">???</div><div class="desc">Earn ${fmt(g.base*0.25)} coins to unlock.</div></div>`;list.appendChild(el);continue;}
     el.innerHTML=`<div class="ico">${g.ico}</div><div class="body"><div class="name">${g.name} ${lv?`<span class="owned">Lv ${lv}</span>`:""}</div>
       <div class="desc">${slotEffDesc(g,lv)}</div></div>
       <div class="right"><div class="cost">${fmt(genCost(g,lv))}</div></div>`;
@@ -1158,7 +1149,7 @@ function openSettings(){const seg=(cur,opts)=>opts.map(o=>`<button data-v="${o.v
 document.getElementById("gearBtn").onclick=openSettings;document.getElementById("settingsBtn").onclick=openSettings;
 
 /* ============ save / load ============ */
-const KEY="neonSpinSave_v4",SKEY="neonSpinSet_v2";
+const KEY="neonSpinSave_v5",SKEY="neonSpinSet_v2";
 function snapshot(){S.savedAt=Date.now();return{S,SET,goals:GOALS.map(g=>g.done),endingShown,buffs};}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(snapshot()));}catch(e){}}
 function saveSettings(){try{localStorage.setItem(SKEY,JSON.stringify(SET));}catch(e){}}
