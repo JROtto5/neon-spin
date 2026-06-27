@@ -369,6 +369,15 @@
         </div>
         <div class="vsection">★ VIP Perks — spend chips</div>
         <div class="list" id="vipUpList"></div>
+
+        <div class="vhero" id="ascHero" style="margin-top:18px;display:none">
+          <div class="chiplbl" style="color:var(--gold)">✦ Star Shards ✦</div>
+          <div class="chipbig" id="vStarBig" style="background:linear-gradient(90deg,var(--gold),#fff,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent">0</div>
+          <div class="vmult" id="vStarMult">×1.00 permanent · 0 ascensions</div>
+          <button class="cashbtn dim" id="ascendBtn" style="background:linear-gradient(90deg,#ff9d00,var(--gold),#ffe9a8)">ASCEND <span id="ascendGain">+0</span><small id="ascendDesc">—</small></button>
+        </div>
+        <div class="vsection" id="ascSection" style="display:none">✦ Ascension Perks — spend Star Shards</div>
+        <div class="list" id="ascUpList"></div>
       </div>
 
       <div id="tab-stats" style="display:none">
@@ -573,6 +582,7 @@ const ACH=[
   {id:"a_luck100",ico:"🌈",name:"Probability Bender",desc:"Reach 100% Luck",c:s=>luckPct()>=100},
   {id:"a_p1",ico:"💎",name:"VIP Member",desc:"Prestige once",c:s=>s.prestiges>=1},
   {id:"a_p5",ico:"💠",name:"Whale",desc:"Prestige 5 times",c:s=>s.prestiges>=5},
+  {id:"a_ascend",ico:"✦",name:"Transcendent",desc:"Ascend for Star Shards",c:s=>(s.ascensions||0)>=1},
   {id:"a_chip100",ico:"🔷",name:"Chip Stack",desc:"Own 100 VIP chips",c:s=>s.chips>=100},
   {id:"a_gold",ico:"✨",name:"Eagle Eye",desc:"Click a golden spin",c:s=>s.goldenClicked>=1},
   {id:"a_bonus",ico:"🎁",name:"Bonus Time",desc:"Trigger a free-spins bonus",c:s=>(s.bonusTriggers||0)>=1},
@@ -597,14 +607,14 @@ function slotLvl(id){return S.gens[id]||0;}
 function slotEff(key){let m=1;for(const g of GENS)if(g.eff[key]){const l=slotLvl(g.id);if(l)m*=Math.pow(g.eff[key],l);}return m;} // multiplicative slot upgrades
 function slotAdd(key){let a=0;for(const g of GENS)if(g.eff[key])a+=slotLvl(g.id)*g.eff[key];return a;} // additive slot upgrades
 function slotWin(){return 1+slotAdd('win')+slotAdd('sym');} // ADDITIVE win bonus (no exponential compounding)
-function luckPct(){let l=0;for(const u of UP)if(S.ups[u.id]&&u.eff.luck)l+=u.eff.luck;l+=(S.vips.v_luck||0)*5;l+=slotAdd('luck');l+=luckBuff();return l;}
+function luckPct(){let l=0;for(const u of UP)if(S.ups[u.id]&&u.eff.luck)l+=u.eff.luck;l+=(S.vips.v_luck||0)*5;l+=slotAdd('luck');l+=((S.asc&&S.asc.asc_luck)||0)*10;l+=luckBuff();return l;}
 function chipMult(){return 1+S.chips*0.02;}
 function starMult(){return (1+(S.stars||0)*0.5)*(1+((S.asc&&S.asc.asc_gain)||0)*0.5);} // Ascension Star Shards
 // all win multipliers (slot upgrades + legacy upgrade effects + vip/chip/ach/star/buffs)
 function payMult(){let m=1;for(const u of UP)if(S.ups[u.id]&&(u.eff.payMult||u.eff.gen))m*=(u.eff.payMult||u.eff.mult);m*=1+(S.vips.v_pay||0)*0.25;m*=chipMult();m*=achMult();m*=buffMult();m*=starMult();m*=slotWin();return m;}
 function reelCount(){let r=3;for(const u of UP)if(S.ups[u.id]&&u.eff.reels)r=Math.max(r,u.eff.reels);return r;}
 function rowCount(){let r=Math.max(1,devRows);for(const u of UP)if(S.ups[u.id]&&u.eff.rows)r=Math.max(r,u.eff.rows);return r;}
-function autoInterval(){let b=1200;for(const u of UP)if(S.ups[u.id]&&u.eff.autoSpeed)b*=u.eff.autoSpeed;b*=Math.pow(0.85,S.vips.v_auto||0);b*=slotEff('speed');return Math.max(200,b);}
+function autoInterval(){let b=1200;for(const u of UP)if(S.ups[u.id]&&u.eff.autoSpeed)b*=u.eff.autoSpeed;b*=Math.pow(0.85,S.vips.v_auto||0);b*=slotEff('speed');b*=Math.pow(0.9,(S.asc&&S.asc.asc_auto)||0);return Math.max(150,b);}
 function jackpotBoost(){return S.ups.u_jack?2:1;}
 function megaBoost(){return S.ups.u_mega?3:1;}
 function tableLimitMult(){return slotEff('bet');}
@@ -708,7 +718,7 @@ function evaluate(grid){
     let ways=1,run=0,usedWild=false;
     for(let i=0;i<rc;i++){const c=colHas(i,s);if(c===0)break;if(reelWild(i))usedWild=true;ways*=c;run++;}
     if(run>=2&&ways>0){
-      const factor=run>=rc?1:run===rc-1?0.4:run===rc-2?0.12:run===rc-3?0.05:0.02;
+      const factor=run>=rc?1.8:run===rc-1?0.85:run===rc-2?0.3:run===rc-3?0.12:0.05;
       let pay=s.three*factor*bet*mult*ways;
       if(usedWild&&wildMult>1)pay*=wildMult;
       if(pay>0){total+=pay;any=true;
@@ -726,7 +736,10 @@ async function spin(manual){
   if(spinning)return false;
   const free=S.freeSpins>0;
   const bet=currentBet();
-  if(!free&&S.coins<bet){if(manual){flashResult("Not enough coins!","");beep(160,0.08);sfx("lose",0.35);}return false;}
+  if(!free&&S.coins<bet){
+    if(S.coins<BETS[0]){const comp=BETS[0]*8;S.coins+=comp;S.betIdx=0;toast("🎁","On the house!","+"+fmt(comp)+" comp coins");beep(520,0.1);renderBets();updateStats();return false;}
+    else{if(manual){flashResult("Lower your bet ↓","");beep(160,0.08);}maxAffordableBet();return false;}
+  }
   spinning=true;if(!free)S.coins-=bet;S.spins++;if(manual&&!free)S.manualSpins++;else S.autoSpins++;
   const btn=document.getElementById("spinBtn");btn.disabled=true;
   document.querySelectorAll(".reel").forEach(r=>r.classList.remove("win"));
@@ -1072,15 +1085,60 @@ function renderVip(){const pending=Math.max(0,chipsFor(S.totalEarned)-S.chipsBan
     if(lvl>=v.max){el.classList.add("maxed");el.innerHTML=`<div class="ico">${v.ico}</div><div class="body"><div class="name">${v.name} <span class="owned">MAX</span></div><div class="desc">${v.desc}</div></div><div class="right"><div class="cost" style="color:var(--green)">✓</div></div>`;}
     else{const cost=vipCost(v,lvl);el.innerHTML=`<div class="ico">${v.ico}</div><div class="body"><div class="name">${v.name} <span class="owned">Lv ${lvl}/${v.max}</span></div><div class="desc">${v.desc}</div></div><div class="right"><div class="cost ${S.chips<cost?'no':''}" style="color:var(--neon2)">${cost} 💎</div></div>`;
       el.onclick=()=>{if(S.chips>=cost){S.chips-=cost;S.vips[v.id]=lvl+1;beep(580,0.12);renderVip();updateStats();setupAuto();}};}
-    list.appendChild(el);}}
+    list.appendChild(el);}
+  // ----- Ascension -----
+  const pendS=Math.max(0,starsFor(S.totalChipsEarned)-(S.starsBanked||0));
+  const showAsc=(S.stars||0)>0||(S.totalChipsEarned||0)>0||pendS>0;
+  document.getElementById("ascHero").style.display=showAsc?"block":"none";
+  document.getElementById("ascSection").style.display=showAsc?"block":"none";
+  if(showAsc){
+    document.getElementById("vStarBig").textContent=fmtInt(S.stars||0);
+    document.getElementById("vStarMult").innerHTML=`×${starMult().toFixed(2)} permanent · <b>${fmtInt(S.ascensions||0)}</b> ascension${(S.ascensions||0)===1?'':'s'}`;
+    document.getElementById("ascendGain").textContent="+"+fmtInt(pendS);
+    const need=Math.pow((S.starsBanked||0)+1,2)*25;
+    document.getElementById("ascendDesc").textContent=pendS>0?`Ascend for ${fmtInt(pendS)} ✦ (resets everything but Stars)`:`Earn ${fmtInt(need)} lifetime VIP chips for your next Shard`;
+    document.getElementById("ascendBtn").classList.toggle("dim",pendS<1);
+    const al=document.getElementById("ascUpList");al.innerHTML="";
+    for(const a of ASCS){const lvl=(S.asc&&S.asc[a.id])||0;const el=document.createElement("div");el.className="item";
+      if(lvl>=a.max){el.classList.add("maxed");el.innerHTML=`<div class="ico">${a.ico}</div><div class="body"><div class="name">${a.name} <span class="owned">MAX</span></div><div class="desc">${a.desc}</div></div><div class="right"><div class="cost" style="color:var(--green)">✓</div></div>`;}
+      else{const c=ascCost(a,lvl);el.innerHTML=`<div class="ico">${a.ico}</div><div class="body"><div class="name">${a.name} <span class="owned">Lv ${lvl}/${a.max}</span></div><div class="desc">${a.desc}</div></div><div class="right"><div class="cost ${(S.stars||0)<c?'no':''}" style="color:var(--gold)">${c} ✦</div></div>`;
+        el.onclick=()=>{if((S.stars||0)>=c){S.stars-=c;S.asc=S.asc||{};S.asc[a.id]=lvl+1;beep(640,0.12);renderVip();updateStats();setupAuto();}};}
+      al.appendChild(el);}
+  }}
 function doPrestige(){const pending=Math.max(0,chipsFor(S.totalEarned)-S.chipsBanked);if(pending<1)return;
   openModal("Cash Out?",`<p>Bank <b style="color:var(--neon2)">${fmtInt(pending)} VIP chips</b> for a permanent <b style="color:var(--gold)">+${pending*2}%</b> to all gains.</p><p style="color:var(--dim)">Resets coins, generators &amp; upgrades. Keeps chips, awards &amp; VIP perks.</p>`,
-    [{label:"Cash Out 💎",cls:"alt",fn:()=>{S.chips+=pending;S.chipsBanked+=pending;S.prestiges++;
+    [{label:"Cash Out 💎",cls:"alt",fn:()=>{S.chips+=pending;S.chipsBanked+=pending;S.totalChipsEarned=(S.totalChipsEarned||0)+pending;S.prestiges++;
       const startC=START_COINS+(S.vips.v_start||0)*1000;const keep=(S.vips.v_keep||0)*0.05*cps();
       S.coins=startC+keep;S.gens={};S.ups={};S.spins=0;S.runEarned=0;S.totalEarned=0;S.chipsBanked=S.chips;S.betIdx=0;S.auto=false;
       GOALS.forEach(g=>g.done=false);endingShown=S.totalEarned>=1e18;buffs={};
       closeModal();renderMachine();fullRender();pushNews(`Cashed out for ${pending} VIP chips!`);toast("💎","Prestige!","+"+pending+" VIP chips");checkAchievements();}},
      {label:"Cancel",cls:"",fn:closeModal}]);}
+
+/* ============ ASCENSION (2nd prestige layer — Star Shards) ============ */
+const ASCS=[
+  {id:"asc_gain", ico:"✦",name:"Cosmic Fortune", cost:1,max:10,desc:"+50% to ALL gains per level"},
+  {id:"asc_start",ico:"💼",name:"Cosmic Bankroll",cost:2,max:6, desc:"Start each run with far more coins"},
+  {id:"asc_luck", ico:"🌟",name:"Star Luck",      cost:2,max:6, desc:"+10% permanent Luck per level"},
+  {id:"asc_auto", ico:"⚡",name:"Star Speed",      cost:3,max:5, desc:"Auto-spin 10% faster per level"},
+  {id:"asc_keep", ico:"🏦",name:"Star Legacy",     cost:4,max:5, desc:"Keep 1 level of every slot upgrade per level on prestige"},
+];
+function ascCost(a,l){return a.cost*(l+1);}
+function starsFor(tc){return (tc||0)<25?0:Math.floor(Math.pow((tc||0)/25,0.5));}
+function doAscend(){
+  const pending=Math.max(0,starsFor(S.totalChipsEarned)-(S.starsBanked||0));if(pending<1)return;
+  openModal("✦ ASCEND ✦",`<p>Convert your legacy into <b style="color:#ffc24d">${fmtInt(pending)} Star Shard${pending>1?'s':''}</b> — each gives a permanent <b>+50%</b> to ALL gains.</p><p style="color:var(--dim)">Resets coins, slot upgrades, VIP chips &amp; perks. Keeps Star Shards, ascension perks &amp; awards.</p>`,
+   [{label:"ASCEND ✦",cls:"alt",fn:()=>{
+     const keep={stars:(S.stars||0)+pending,starsBanked:(S.starsBanked||0)+pending,asc:S.asc||{},ach:S.ach,
+       totalChipsEarned:S.totalChipsEarned||0,ascensions:(S.ascensions||0)+1,goldenClicked:S.goldenClicked||0,
+       playtime:S.playtime||0,bestWin:S.bestWin||0,megas:S.megas||0,jackpots:S.jackpots||0,
+       bonusTriggers:S.bonusTriggers||0,bonusBuys:S.bonusBuys||0,wheelSpins:S.wheelSpins||0,progHits:S.progHits||0,spins:S.spins||0};
+     if(freeTimer){clearTimeout(freeTimer);freeTimer=null;}
+     Object.assign(S,newGame());Object.assign(S,keep);
+     S.coins=START_COINS+((keep.asc.asc_start||0)?Math.pow(10,3+(keep.asc.asc_start)):0);
+     const legacy=(keep.asc.asc_keep||0);if(legacy)GENS.forEach(g=>{S.gens[g.id]=legacy;});
+     GOALS.forEach(g=>g.done=false);endingShown=false;buffs={};
+     closeModal();renderMachine();fullRender();bigConfetti();jackpotFlash();toast("✦","ASCENDED!","+"+pending+" Star Shards");pushNews("✦ ASCENSION! +"+pending+" Star Shards");checkAchievements();
+   }},{label:"Cancel",cls:"",fn:closeModal}]);}
 
 function renderStats(){const g=document.getElementById("statGrid");
   const rows=[["Total earned",fmt(S.totalEarned)],["This run",fmt(S.runEarned)],["Coins/sec",fmt(cps())],["Best single win",fmt(S.bestWin)],
@@ -1133,6 +1191,7 @@ function openModal(title,bodyHTML,btns){document.getElementById("mTitle").innerH
   document.getElementById("overlay").classList.add("show");}
 function closeModal(){document.getElementById("overlay").classList.remove("show");}
 document.getElementById("prestigeBtn").onclick=doPrestige;
+document.getElementById("ascendBtn").onclick=doAscend;
 
 function openSettings(){const seg=(cur,opts)=>opts.map(o=>`<button data-v="${o.v}" class="${cur===o.v?'on':''}">${o.t}</button>`).join("");
   openModal("⚙️ Settings",`
