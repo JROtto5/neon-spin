@@ -264,6 +264,33 @@
   .cashbtn.dim{filter:grayscale(.7) brightness(.6);cursor:not-allowed;animation:none}
   .cashbtn small{display:block;font-family:'Rajdhani';font-weight:600;font-size:12px;opacity:.9;letter-spacing:.5px;margin-top:2px}
   .vsection{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--neon);margin:6px 2px 8px;font-weight:700}
+
+  /* ---- juicy animations ---- */
+  #flash{position:fixed;inset:0;pointer-events:none;z-index:95;opacity:0;
+    background:radial-gradient(circle at 50% 45%, rgba(255,210,63,.55), rgba(255,43,214,.25) 40%, transparent 70%)}
+  #flash.go{animation:flashAnim .7s ease-out}
+  @keyframes flashAnim{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
+  .shake{animation:bigshake .55s}
+  @keyframes bigshake{0%,100%{transform:translate(0,0)}10%{transform:translate(-7px,3px) rotate(-.5deg)}30%{transform:translate(8px,-5px) rotate(.6deg)}50%{transform:translate(-6px,3px)}70%{transform:translate(6px,4px)}90%{transform:translate(-3px,-2px)}}
+  .reel.antic{animation:antic .35s infinite alternate}
+  @keyframes antic{from{border-color:#6a36a0;box-shadow:inset 0 10px 16px rgba(0,0,0,.7),inset 0 -10px 16px rgba(0,0,0,.7)}
+    to{border-color:var(--gold);box-shadow:0 0 26px var(--gold),inset 0 0 18px rgba(255,210,63,.4)}}
+  .reel.win{animation:winpulse .5s ease-out}
+  @keyframes winpulse{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
+  .progmeter{margin:0 0 10px;padding:7px 10px;border-radius:11px;font-family:'Orbitron';font-weight:800;font-size:13px;
+    color:var(--gold);background:linear-gradient(90deg,rgba(40,18,72,.8),rgba(80,30,20,.6),rgba(40,18,72,.8));
+    border:1px solid rgba(255,210,63,.35);box-shadow:0 0 16px rgba(255,160,0,.2) inset;letter-spacing:.5px}
+
+  /* ---- bonus wheel ---- */
+  .wheelwrap{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:8px}
+  .wheelbox{position:relative;width:280px;height:280px}
+  .wheelbox .ptr{position:absolute;top:-6px;left:50%;transform:translateX(-50%);z-index:5;font-size:30px;filter:drop-shadow(0 0 6px var(--gold))}
+  .wheel{width:280px;height:280px;border-radius:50%;position:relative;transition:transform 5s cubic-bezier(.13,.9,.18,1);
+    border:6px solid var(--gold);box-shadow:0 0 40px rgba(255,160,0,.5),inset 0 0 30px rgba(0,0,0,.6)}
+  .wheel .seg{position:absolute;inset:0;display:flex;justify-content:center;clip-path:polygon(50% 50%, 28% 0, 72% 0)}
+  .wheel .seg span{margin-top:16px;font-family:'Orbitron';font-weight:800;font-size:13px;color:#fff;text-shadow:0 1px 3px #000}
+  .wheelhub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:54px;height:54px;border-radius:50%;
+    background:radial-gradient(circle,#fff,var(--gold));z-index:4;box-shadow:0 0 18px var(--gold);display:flex;align-items:center;justify-content:center;font-size:24px}
 </style>
 </head>
 <body>
@@ -290,8 +317,9 @@
     <div class="card">
       <h2>Slot Machine <span style="font-size:11px;color:var(--dim)" id="reelInfo">3 reels</span></h2>
       <div class="machine">
-        <div class="marquee">★ <b>JACKPOT</b> 7️⃣7️⃣7️⃣ ★ <span id="marqueeMsg">MEGA 🌌🌌🌌</span> ★</div>
+        <div class="marquee">★ <b>JACKPOT</b> 7️⃣7️⃣7️⃣ ★ <span id="marqueeMsg">BUFFALO 🐃🐃🐃</span> ★</div>
         <div id="freeBanner" class="freebanner" style="display:none"></div>
+        <div id="progMeter" class="progmeter">💰 PROGRESSIVE JACKPOT &nbsp; 0</div>
         <div class="reels" id="reels"></div>
         <div class="betrow">
           <span class="label">Bet:</span><span id="betChips"></span>
@@ -303,7 +331,8 @@
         </div>
         <div class="autorow">
           <button class="btn alt sm" id="buyBonusBtn">🎁 BUY BONUS · <span id="bonusCost">—</span></button>
-          <span style="font-size:10.5px;color:var(--dim)">10 free spins · ×3 wins · 75× bet</span>
+          <button class="btn sm" id="wheelBtn" style="background:linear-gradient(90deg,#ff6ad5,#7b00ff);color:#fff;box-shadow:0 6px 0 #4a0080;display:none">🎡 SPIN WHEEL!</button>
+          <span id="wheelHint" style="font-size:10.5px;color:var(--dim)">Wheel charges as you spin</span>
         </div>
         <div class="result" id="result">Press <kbd>SPACE</kbd> or click SPIN</div>
       </div>
@@ -322,6 +351,7 @@
       </div>
 
       <div id="tab-gen">
+        <div style="font-size:11.5px;color:var(--dim);margin-bottom:9px;line-height:1.4">🎰 Your network of <b style="color:var(--neon2)">auto-spinning slot machines</b> — each spins itself for passive coins while you chase the big wins.</div>
         <div class="qtyrow">
           <span style="font-size:11px;color:var(--dim);margin-right:auto">Buy:</span>
           <button class="qtybtn active" data-q="1">×1</button>
@@ -368,6 +398,7 @@
   </div>
 </div>
 
+<div id="flash"></div>
 <div id="golden" title="Click me!">✨</div>
 <div id="toasts"></div>
 
@@ -405,20 +436,18 @@ const SYMBOLS=[
   {ch:"⭐",name:"Star",   weight:11,three:30,  two:1.5},
   {ch:"💎",name:"Diamond",weight:6, three:90,  two:3},
   {ch:"7️⃣",name:"Lucky 7",weight:3, three:300, two:0,jackpot:true},
-  {ch:"🌌",name:"Galaxy", weight:1, three:2500,two:0,mega:true},
+  {ch:"🐃",name:"Buffalo",weight:1, three:2500,two:0,mega:true},
   {ch:"🃏",name:"Wild",   weight:5, three:0,   two:0,wild:true},
   {ch:"🎁",name:"Scatter",weight:6, three:0,   two:0,scatter:true},
 ];
 // dynamic bet ladder — grows with peak wealth
 let BETS=[10,50,250,1000,5000,25000];
 function niceBets(peak){const mant=[1,2.5,5];const out=[];
-  for(let e=1;e<=20;e++)for(const m of mant){const v=Math.round(m*Math.pow(10,e));if(v<=Math.max(250,peak))out.push(v);}
+  for(let e=1;e<=40;e++)for(const m of mant){const v=m*Math.pow(10,e);if(v<=Math.max(250,peak))out.push(v);}
   if(!out.length)out.push(10);return out.slice(-6);}
 function maybeRefreshBets(){
-  // ladder tracks CURRENT bankroll — scales down when unlucky, up when winning (smoothed to avoid jitter)
-  S.betScale=S.betScale||S.coins||250;
-  S.betScale+=(S.coins-S.betScale)*0.15; // ease toward current coins
-  const nb=niceBets(Math.max(250,Math.min(S.coins*1.05,S.betScale)));
+  // ladder top always tracks your CURRENT coins so you can MAX at any scale (and it shrinks when you're low)
+  const nb=niceBets(Math.max(250,S.coins));
   if(nb.length!==BETS.length||nb.some((v,i)=>v!==BETS[i])){BETS=nb;if(S.betIdx>=BETS.length)S.betIdx=BETS.length-1;renderBets();}
 }
 
@@ -429,35 +458,38 @@ function newGame(){return{
   betIdx:0,auto:false,chips:0,chipsBanked:0,goldenClicked:0,
   gens:{},ups:{},vips:{},ach:{},
   prestiges:0,started:Date.now(),savedAt:Date.now(),playtime:0,
-  jackpots:0,megas:0,freeSpins:0,freeMult:1,bonusBuys:0,bonusTriggers:0,
+  jackpots:0,megas:0,freeSpins:0,freeMult:1,bonusBet:0,bonusBuys:0,bonusTriggers:0,
+  progressive:0,progHits:0,wheelCharge:0,wheelTokens:0,wheelSpins:0,
+  stars:0,starsBanked:0,totalChipsEarned:0,ascensions:0,asc:{},
 };}
 const S=newGame();
 const SET={sound:true,notation:"short",particles:true,golden:true};
 let devRows=0; // ?rows=N preview override
 
 /* ============ generators ============ */
+// every generator is a SLOT MACHINE that auto-spins for you (theme: from one penny slot to a cosmic slot network)
 const GENS=[
-  {id:"cat",   ico:"🐱",name:"Lucky Cat",       base:15,    cps:0.6},
-  {id:"bot",   ico:"🤖",name:"Slot Bot",        base:110,   cps:5},
-  {id:"lounge",ico:"🍸",name:"VIP Lounge",      base:1300,  cps:47},
-  {id:"floor", ico:"🎰",name:"Casino Floor",    base:16500, cps:380},
-  {id:"online",ico:"🌐",name:"Online Casino",   base:210000,cps:3100},
-  {id:"vault", ico:"🏦",name:"The Vault",       base:3.1e6, cps:25000},
-  {id:"city",  ico:"🌃",name:"Casino City",     base:4.6e7, cps:200000},
-  {id:"orbit", ico:"🛰️",name:"Orbital Casino",  base:7.2e8, cps:1.7e6},
-  {id:"galaxy",ico:"🌌",name:"Galactic Jackpot",base:1.3e10,cps:1.5e7},
-  {id:"nebula",ico:"🌠",name:"Nebula Resort",   base:2.4e11,cps:1.45e8},
-  {id:"hole",  ico:"🕳️",name:"Black Hole Bank", base:4.8e12,cps:1.35e9},
-  {id:"multi", ico:"🪐",name:"Multiverse Mint", base:1.05e14,cps:1.3e10},
-  {id:"deity", ico:"👁️",name:"Luck Deity",      base:2.5e15,cps:1.45e11},
-  {id:"quantum",ico:"⚛️",name:"Quantum Casino",  base:6e16,  cps:1.4e12},
-  {id:"dimen", ico:"🌀",name:"Dimension Den",    base:1.4e18,cps:1.3e13},
-  {id:"cartel",ico:"💠",name:"Cosmic Cartel",    base:3.3e19,cps:1.25e14},
-  {id:"engine",ico:"🛠️",name:"Infinity Engine",  base:8e20,  cps:1.2e15},
-  {id:"realm", ico:"🔮",name:"Reality Mint",     base:2e22,  cps:1.15e16},
-  {id:"omega", ico:"🎴",name:"Omega Jackpot",    base:5e23,  cps:1.1e17},
-  {id:"singul",ico:"🕛",name:"The Singularity",  base:1.3e25,cps:1.05e18},
-  {id:"god",   ico:"🌞",name:"Casino Godhead",   base:3.5e26,cps:1e19},
+  {id:"cat",   ico:"🎰",name:"Penny Slot",        base:15,    cps:0.6},
+  {id:"bot",   ico:"🕹️",name:"Classic 3-Reel",    base:110,   cps:5},
+  {id:"lounge",ico:"🍒",name:"Fruit Machine",     base:1300,  cps:47},
+  {id:"floor", ico:"📺",name:"Video Slot",        base:16500, cps:380},
+  {id:"online",ico:"🪙",name:"Slot Bank",         base:210000,cps:3100},
+  {id:"vault", ico:"🎴",name:"Slot Arcade",       base:3.1e6, cps:25000},
+  {id:"city",  ico:"🎟️",name:"Slot Parlor",       base:4.6e7, cps:200000},
+  {id:"orbit", ico:"🎲",name:"Slot Casino",       base:7.2e8, cps:1.7e6},
+  {id:"galaxy",ico:"🎡",name:"Slot Megaplex",     base:1.3e10,cps:1.5e7},
+  {id:"nebula",ico:"🌐",name:"Online Slots",      base:2.4e11,cps:1.45e8},
+  {id:"hole",  ico:"📱",name:"Mobile Slots App",  base:4.8e12,cps:1.35e9},
+  {id:"multi", ico:"🛰️",name:"Orbital Slot Array",base:1.05e14,cps:1.3e10},
+  {id:"deity", ico:"🌌",name:"Galactic Slot Grid",base:2.5e15,cps:1.45e11},
+  {id:"quantum",ico:"⚛️",name:"Quantum Slots",     base:6e16,  cps:1.4e12},
+  {id:"dimen", ico:"🌀",name:"Dimensional Slots",  base:1.4e18,cps:1.3e13},
+  {id:"cartel",ico:"💠",name:"Multiverse Slots",   base:3.3e19,cps:1.25e14},
+  {id:"engine",ico:"⚙️",name:"Infinite Slot Engine",base:8e20, cps:1.2e15},
+  {id:"realm", ico:"🔮",name:"Reality Slot Loom",  base:2e22,  cps:1.15e16},
+  {id:"omega", ico:"♾️",name:"Omega Jackpot Net",   base:5e23,  cps:1.1e17},
+  {id:"singul",ico:"🕛",name:"Singularity Slots",  base:1.3e25,cps:1.05e18},
+  {id:"god",   ico:"🌞",name:"Slot Godhead",       base:3.5e26,cps:1e19},
 ];
 function genCost(g,o){return Math.ceil(g.base*Math.pow(1.16,o));}
 function genCostN(g,o,n){let c=0;for(let i=0;i<n;i++)c+=genCost(g,o+i);return c;}
@@ -500,6 +532,9 @@ const UP=[
   {id:"u_grid3",ico:"🎛️",name:"3-Row Grid",cost:6e6,desc:"Reels become a grid — pays every row + diagonals!",req:s=>s.spins>=180,eff:{rows:3}},
   {id:"u_grid4",ico:"🧮",name:"4-Row Grid",cost:2e9,desc:"4 rows of paylines",req:s=>!!s.ups.u_grid3&&s.spins>=600,eff:{rows:4}},
   {id:"u_grid5",ico:"🔲",name:"5-Row Mega Grid",cost:8e11,desc:"5 rows — a full grid of ways to win!",req:s=>!!s.ups.u_grid4&&s.spins>=1500,eff:{rows:5}},
+  {id:"u_grid6",ico:"⬛",name:"6-Row Hypergrid",cost:5e14,desc:"6 rows of paylines + diagonals",req:s=>!!s.ups.u_grid5&&s.spins>=3000,eff:{rows:6}},
+  {id:"u_grid7",ico:"🟪",name:"7-Row Cosmic Grid",cost:1e17,desc:"7 rows — utterly absurd ways to win",req:s=>!!s.ups.u_grid6&&s.spins>=5000,eff:{rows:7}},
+  {id:"u_reel7",ico:"🎟️",name:"Seventh Reel",cost:1e25,desc:"A 7th reel — godlike lines!",req:s=>!!s.ups.u_reel6&&s.spins>=4000,eff:{reels:7}},
   {id:"u_pay5",ico:"🃏",name:"Cheat Codes",cost:1e21,desc:"Spin payouts ×5",req:s=>(s.gens.quantum||0)>=10,eff:{payMult:5}},
   {id:"u_luck6",ico:"🌌",name:"Cosmic Clover",cost:1e24,desc:"+30% Luck",req:s=>(s.gens.realm||0)>=10,eff:{luck:30}},
 ];
@@ -613,7 +648,7 @@ function renderMachine(){
   }
   strips.forEach(el=>{const col=Array.from({length:rows},()=>SYMBOLS[Math.floor(Math.random()*5)]);
     setStripFinalCol(el,col);el.style.transform=`translateY(${-((STRIP_LEN-rows)*SH)}px)`;});
-  document.getElementById("reelInfo").textContent=rows>1?(rc+"×"+rows+" grid"):(rc+" reels");
+  document.getElementById("reelInfo").textContent=rows>1?(rc+"×"+rows+" · "+waysCount()+" ways"):(rc+" reels");
 }
 // place `col` (top→bottom symbols) on the bottom rows cells; rest random
 function setStripFinalCol(el,col){
@@ -624,7 +659,8 @@ function setStripFinalCol(el,col){
 
 /* ============ spin ============ */
 let spinning=false;
-function currentBet(){return BETS[S.betIdx];}
+// during a bonus the bet is LOCKED to what it was when the bonus started (anti-exploit)
+function currentBet(){return (S.freeSpins>0&&S.bonusBet)?S.bonusBet:BETS[S.betIdx];}
 // score one horizontal line (array of symbols), with wild substitution — returns uncapped payout
 function evaluateLine(line){
   const rc=line.length;
@@ -644,22 +680,39 @@ function evaluateLine(line){
   if(bestN===2&&best.two>0&&rc>=4)return{payout:best.two*bet*mult*0.4*wmult,kind:"win",label:`${best.name} pair${tag}`};
   return{payout:0};
 }
-// evaluate the whole grid (array of columns, each column = array of rows symbols)
+// max ways for current machine (Buffalo-style: product of rows per reel)
+function waysCount(){return Math.pow(rowCount(),reelCount());}
+// WAYS-TO-WIN evaluation (Buffalo style): pay for matching symbols on consecutive reels from
+// the left, counting EVERY position per reel. Wilds substitute for all & carry x2/x3 in free spins.
 function evaluate(grid){
   const rc=grid.length,rows=grid[0].length,bet=currentBet();
+  const mult=payMult()*(S.freeSpins>0?(S.freeMult||3):1);
   const cap=cps()*60+S.coins*0.02+bet*2+2000;
   let scat=0;grid.forEach(col=>col.forEach(s=>{if(s&&s.scatter)scat++;}));
-  const lines=[];
-  for(let r=0;r<rows;r++)lines.push(grid.map(col=>col[r]));        // each row is a payline
-  if(rows>=3){const n=Math.min(rc,rows);                           // two diagonals
-    lines.push(Array.from({length:n},(_,k)=>grid[k][k]));
-    lines.push(Array.from({length:n},(_,k)=>grid[k][rows-1-k]));}
+  // sunset multiplier wilds — active during free spins
+  let wildMult=1;
+  grid.forEach(col=>col.forEach(s=>{if(s&&s.wild&&S.freeSpins>0)wildMult*=(Math.random()<0.5?2:3);}));
+  if(wildMult>27)wildMult=27;
+  const colHas=(i,s)=>grid[i].filter(x=>x===s||x.wild).length; // cells matching s or wild in reel i
+  const reelWild=i=>grid[i].some(x=>x.wild);
+  const core=SYMBOLS.filter(s=>!s.wild&&!s.scatter);
   const order={win:1,big:2,jackpot:3,mega:4};
-  let total=0,kind="lose",label="No win",any=false;
-  for(const ln of lines){const r=evaluateLine(ln);if(r.payout>0){total+=r.payout;any=true;
-    if((order[r.kind]||0)>(order[kind]||0)){kind=r.kind;label=r.label;}}}
+  let total=0,kind="lose",label="No win",any=false,topWays=0;
+  for(const s of core){
+    let ways=1,run=0,usedWild=false;
+    for(let i=0;i<rc;i++){const c=colHas(i,s);if(c===0)break;if(reelWild(i))usedWild=true;ways*=c;run++;}
+    if(run>=2&&ways>0){
+      const factor=run>=rc?1:run===rc-1?0.4:run===rc-2?0.12:run===rc-3?0.05:0.02;
+      let pay=s.three*factor*bet*mult*ways;
+      if(usedWild&&wildMult>1)pay*=wildMult;
+      if(pay>0){total+=pay;any=true;
+        const k=s.mega?"mega":s.jackpot?"jackpot":(s.three*factor>=30?"big":"win");
+        if((order[k]||0)>(order[kind]||0)||(k===kind&&ways>topWays)){
+          kind=k;topWays=ways;label=`${s.name} ×${run} · ${ways} way${ways>1?'s':''}`+(usedWild&&wildMult>1?` ×${wildMult}🃏`:"");}}
+    }
+  }
   total=Math.min(total,cap);
-  return{payout:total,kind:any?kind:"lose",label:any?label:"No win",win:any?[...Array(rc).keys()]:[],bonus:scat>=3,scatters:scat};
+  return{payout:any?total:0,kind:any?kind:"lose",label:any?label:"No win",win:any?[...Array(rc).keys()]:[],bonus:scat>=3,scatters:scat,ways:topWays};
 }
 function idxOf(arr,sym){const r=[];arr.forEach((s,i)=>{if(s===sym)r.push(i);});return r;}
 
@@ -676,7 +729,8 @@ async function spin(manual){
   const grid=[];for(let c=0;c<rc;c++){const col=[];for(let r=0;r<rows;r++)col.push(pickSymbol(pool,tw));grid.push(col);}
   const dur=(manual&&!free)?620:Math.min(360,autoInterval()*0.55);
   beep(330,0.03);if(manual&&!free)sfx("spin",0.35);
-  await animateReels(grid,dur);
+  const scatPre=grid.slice(0,-1).reduce((a,col)=>a+col.filter(s=>s.scatter).length,0);
+  await animateReels(grid,dur,scatPre>=2); // anticipation: slow last reel when bonus is close
   const res=evaluate(grid);
   if(res.payout>0){
     S.coins+=res.payout;S.totalEarned+=res.payout;S.runEarned+=res.payout;
@@ -684,11 +738,21 @@ async function spin(manual){
     if(res.kind==="jackpot")S.jackpots++;if(res.kind==="mega")S.megas++;
     res.win.forEach(i=>{const r=document.getElementById("reel"+i);if(r)r.classList.add("win");});
     showWin(res);spawnFloat(res.payout);
-    if(res.kind==="mega"){beep(880,0.5,"sawtooth");sfx("mega",0.8);sfx("jackpot",0.7);bigConfetti();}
-    else if(res.kind==="jackpot"){beep(660,0.35,"square");sfx("jackpot",0.75);bigConfetti();}
+    if(res.kind==="mega"){beep(880,0.5,"sawtooth");sfx("mega",0.8);sfx("jackpot",0.7);bigConfetti();jackpotFlash();screenShake();fireworks(20);}
+    else if(res.kind==="jackpot"){beep(660,0.35,"square");sfx("jackpot",0.75);bigConfetti();jackpotFlash();screenShake();}
     else if(res.kind==="big"){beep(520,0.18);sfx("win",0.5);sfx("coin",0.4);}
     else{beep(440,0.08);sfx("coin",0.4);}
   }else if(manual&&!free){flashResult("— "+res.label+" —","");}
+  // progressive jackpot: accrues each spin, rare hit (bounded so it can't runaway)
+  S.progressive=(S.progressive||0)+bet*0.4;
+  const potCap=cps()*1800+S.coins*0.5+1e4;if(S.progressive>potCap)S.progressive=potCap;
+  if(!free&&Math.random()<(1/3500)*(1+luckPct()/150)){
+    const won=S.progressive;S.coins+=won;S.totalEarned+=won;S.runEarned+=won;S.progressive=bet*5;S.progHits=(S.progHits||0)+1;
+    showWin({kind:"jackpot",payout:won,label:"PROGRESSIVE"});spawnFloat(won);toast("🎰","PROGRESSIVE JACKPOT!","+"+fmt(won)+" coins!");
+    sfx("mega",0.8);beep(700,0.4,"square");bigConfetti();jackpotFlash();screenShake();fireworks(24);pushNews("🎰 PROGRESSIVE JACKPOT hit!");}
+  // bonus wheel charge
+  S.wheelCharge=(S.wheelCharge||0)+(free?0.6:1.4);
+  if(S.wheelCharge>=100){S.wheelCharge-=100;S.wheelTokens=(S.wheelTokens||0)+1;toast("🎡","Wheel charged!","Free bonus wheel ready");sfx("win",0.4);}
   // lucky streak consume
   if(buffs.lucky){buffs.lucky.left--;if(buffs.lucky.left<=0)delete buffs.lucky;}
   // free spin accounting + bonus trigger
@@ -704,20 +768,21 @@ let freeTimer=null;
 function triggerFreeSpins(scat){
   const award=8+Math.max(0,(scat||3)-3)*4;
   const fresh=!freeTimer;
-  S.freeSpins=(S.freeSpins||0)+award;S.freeMult=3;S.bonusTriggers=(S.bonusTriggers||0)+1;
-  toast("🎁","FREE SPINS!",award+" spins · all wins ×3");pushNews("🎁 BONUS! "+award+" free spins won!");
-  beep(720,0.3,"square");sfx("jackpot",0.7);bigConfetti();renderBonusBanner();
+  if(fresh){S.freeMult=3;S.bonusBet=BETS[S.betIdx];}else S.freeMult=Math.min((S.freeMult||3)+2,25); // multiplier climbs on retrigger!
+  S.freeSpins=(S.freeSpins||0)+award;S.bonusTriggers=(S.bonusTriggers||0)+1;
+  toast("🎁",fresh?"FREE SPINS!":"RETRIGGER!",award+" spins · all wins ×"+S.freeMult);pushNews("🎁 BONUS! "+award+" free spins ×"+S.freeMult+"!");
+  beep(720,0.3,"square");sfx("jackpot",0.7);bigConfetti();jackpotFlash();screenShake();renderBonusBanner();
   if(fresh)freeTimer=setTimeout(pumpFreeSpins,650);
 }
 function pumpFreeSpins(){
   if(S.freeSpins>0){if(!spinning)spin(false);freeTimer=setTimeout(pumpFreeSpins,Math.max(480,autoInterval()));}
-  else{freeTimer=null;S.freeMult=1;renderBonusBanner();flashResult("✦ Bonus complete ✦","win");}
+  else{freeTimer=null;S.freeMult=1;S.bonusBet=0;renderBonusBanner();flashResult("✦ Bonus complete ✦","win");}
 }
 function buyBonus(){
   if(S.freeSpins>0){flashResult("Bonus already running!","");return;}
   const cost=currentBet()*75;
   if(S.coins<cost){flashResult("Need "+fmt(cost)+" coins to buy the bonus!","");beep(160,0.08);sfx("lose",0.3);return;}
-  S.coins-=cost;S.bonusBuys=(S.bonusBuys||0)+1;
+  S.coins-=cost;S.bonusBuys=(S.bonusBuys||0)+1;S.bonusBet=BETS[S.betIdx]; // lock bet at purchase
   toast("💰","BONUS BOUGHT!","10 free spins · all wins ×3");sfx("mega",0.7);bigConfetti();
   S.freeSpins=(S.freeSpins||0)+10;S.freeMult=3;renderBonusBanner();updateStats();
   if(!freeTimer)freeTimer=setTimeout(pumpFreeSpins,500);
@@ -726,20 +791,85 @@ function renderBonusBanner(){
   const m=document.getElementById("freeBanner"),b=document.getElementById("buyBonusBtn");
   if(m){if(S.freeSpins>0){m.style.display="block";m.textContent=`🎁 FREE SPINS: ${S.freeSpins} left · ALL WINS ×${S.freeMult||3}`;}else m.style.display="none";}
   if(b)b.disabled=S.freeSpins>0;
+  const wb=document.getElementById("wheelBtn"),wh=document.getElementById("wheelHint");
+  if(wb){if(S.wheelTokens>0){wb.style.display="";wb.textContent=`🎡 SPIN WHEEL! (${S.wheelTokens})`;if(wh)wh.textContent="Free wheel ready!";}
+    else{wb.style.display="none";if(wh)wh.textContent=`Wheel charges as you spin (${Math.floor(S.wheelCharge||0)}%)`;}}
 }
-function animateReels(grid,dur){
+
+/* ---- juicy animation helpers ---- */
+function jackpotFlash(){const f=document.getElementById("flash");if(!f||!SET.particles)return;f.classList.remove("go");void f.offsetWidth;f.classList.add("go");}
+function screenShake(){if(!SET.particles)return;const w=document.querySelector(".wrap");w.classList.remove("shake");void w.offsetWidth;w.classList.add("shake");setTimeout(()=>w.classList.remove("shake"),560);}
+function fireworks(n){if(!SET.particles)return;const em=["🎆","🎇","✨","💥","⭐","🌟"];for(let i=0;i<(n||16);i++){const f=document.createElement("div");f.className="float";f.textContent=em[i%em.length];
+  f.style.left=(Math.random()*window.innerWidth)+"px";f.style.top=(Math.random()*window.innerHeight*0.7)+"px";f.style.fontSize=(22+Math.random()*26)+"px";
+  f.style.animationDuration=(0.9+Math.random()*1.1)+"s";document.body.appendChild(f);setTimeout(()=>f.remove(),2000);}}
+
+/* ---- bonus wheel mini-game ---- */
+const WHEEL=[
+  {ico:"🪙",label:"COINS",col:"#ffb43f",give:()=>({coins:wheelCoins(8)})},
+  {ico:"🎁",label:"+5 FREE",col:"#33ff99",give:()=>({free:5})},
+  {ico:"🔥",label:"FRENZY",col:"#ff2bd6",give:()=>({buff:["frenzy",7,15000,"🔥 FRENZY ×7"]})},
+  {ico:"💰",label:"BIG COINS",col:"#ffd23f",give:()=>({coins:wheelCoins(40)})},
+  {ico:"✖️",label:"×3 COINS",col:"#00e5ff",give:()=>({mult3:true})},
+  {ico:"🌈",label:"MEGA",col:"#aa00ff",give:()=>({buff:["frenzy",25,10000,"🌈 MEGA FRENZY ×25"]})},
+  {ico:"🎰",label:"JACKPOT",col:"#ff5577",give:()=>({coins:wheelCoins(120)})},
+  {ico:"🎁",label:"+10 FREE",col:"#33ff99",give:()=>({free:10})},
+];
+function wheelCoins(mult){return Math.max(currentBet()*mult, cps()*mult*8 + 5000);}
+function buildWheelDOM(){
+  const segs=WHEEL.length, ang=360/segs;
+  let s='<div class="wheelbox"><div class="ptr">▼</div><div class="wheel" id="wheelEl">';
+  const stops=WHEEL.map((w,i)=>`${w.col} ${i*ang}deg ${(i+1)*ang}deg`).join(",");
+  s+=`<div style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(${stops})"></div>`;
+  WHEEL.forEach((w,i)=>{s+=`<div class="seg" style="transform:rotate(${i*ang+ang/2}deg)"><span>${w.ico}</span></div>`;});
+  s+='</div><div class="wheelhub">🎡</div></div>';
+  return s;
+}
+let wheelSpinning=false;
+function openWheel(){
+  if(S.wheelTokens<=0)return;
+  openModal("🎡 BONUS WHEEL",`<div class="wheelwrap">${buildWheelDOM()}<div id="wheelMsg" style="font-size:14px;color:var(--dim)">Spin to win!</div></div>`,
+    [{label:"SPIN THE WHEEL",cls:"alt",fn:spinWheel}]);
+  document.getElementById("mRow").firstChild.id="wheelGo";
+}
+function spinWheel(){
+  if(wheelSpinning||S.wheelTokens<=0)return;
+  wheelSpinning=true;S.wheelTokens--;S.wheelSpins=(S.wheelSpins||0)+1;
+  const go=document.getElementById("wheelGo");if(go)go.disabled=true;
+  const segs=WHEEL.length,ang=360/segs;
+  const idx=Math.floor(Math.random()*segs);
+  const turns=5+Math.floor(Math.random()*3);
+  const target=turns*360 + (360-(idx*ang+ang/2));
+  const el=document.getElementById("wheelEl");
+  el.style.transform=`rotate(${target}deg)`;sfx("spin",0.4);
+  setTimeout(()=>{
+    const prize=WHEEL[idx];const r=prize.give();let msg="";
+    if(r.coins){S.coins+=r.coins;S.totalEarned+=r.coins;S.runEarned+=r.coins;msg="+"+fmt(r.coins)+" coins!";spawnFloat(r.coins);}
+    if(r.free){S.freeSpins=(S.freeSpins||0)+r.free;S.freeMult=Math.max(S.freeMult||3,3);msg=r.free+" free spins!";if(!freeTimer)freeTimer=setTimeout(pumpFreeSpins,500);}
+    if(r.mult3){const g=Math.max(S.coins*2,cps()*120);S.coins+=g;S.totalEarned+=g;S.runEarned+=g;msg="×3 coins! +"+fmt(g);}
+    if(r.buff){buffs.frenzy={mult:r.buff[1],until:Date.now()+r.buff[2],kind:"frenzy",label:r.buff[3]};msg=r.buff[3]+"!";}
+    const m=document.getElementById("wheelMsg");if(m){m.innerHTML=`<b style="color:var(--gold);font-size:17px">${prize.ico} ${prize.label}</b><br>${msg}`;}
+    toast(prize.ico,"Wheel Prize!",msg);sfx("jackpot",0.6);fireworks(14);renderBonusBanner();updateStats();
+    const row=document.getElementById("mRow");
+    if(S.wheelTokens>0){const go2=document.getElementById("wheelGo");if(go2){go2.disabled=false;go2.textContent="SPIN AGAIN ("+S.wheelTokens+")";}}
+    else row.innerHTML='<button class="btn" onclick="closeModal()" style="font-size:15px;padding:11px 16px">Collect</button>';
+    wheelSpinning=false;
+  },5200);
+}
+function animateReels(grid,dur,antic){
   return new Promise(res=>{
-    const rows=grid[0].length;
+    const rows=grid[0].length,last=grid.length-1;
     grid.forEach((col,i)=>{const el=strips[i];if(!el)return;setStripFinalCol(el,col);
       el.style.transition="none";el.style.transform=`translateY(${-(STRIP_LEN*SH)}px)`;void el.offsetHeight;
-      const d=dur+i*110;el.style.transition=`transform ${d}ms cubic-bezier(.18,.7,.2,1)`;
+      let d=dur+i*110;if(antic&&i===last)d+=900; // anticipation: last reel spins longer
+      el.style.transition=`transform ${d}ms cubic-bezier(.18,.7,.2,1)`;
       el.style.transform=`translateY(${-((STRIP_LEN-rows)*SH)}px)`;});
-    setTimeout(res,dur+(grid.length-1)*110+30);
+    const lastReel=document.getElementById("reel"+last);if(antic&&lastReel)lastReel.classList.add("antic");
+    setTimeout(()=>{if(lastReel)lastReel.classList.remove("antic");res();},dur+last*110+(antic?900:0)+30);
   });
 }
 function flashResult(t,c){const r=document.getElementById("result");r.className="result "+c;r.textContent=t;}
 function showWin(res){const r=document.getElementById("result");let cls="win",txt="";
-  if(res.kind==="mega"){cls="jackpot";txt=`🌌 MEGA JACKPOT! +${fmt(res.payout)} 🌌`;pushNews("🌌 GALACTIC MEGA JACKPOT hit!");toast("🌌","MEGA JACKPOT!","+"+fmt(res.payout)+" coins");}
+  if(res.kind==="mega"){cls="jackpot";txt=`🐃 BUFFALO!! +${fmt(res.payout)} 🐃`;pushNews("🐃 BUFFALO MEGA JACKPOT!");toast("🐃","BUFFALO!!","+"+fmt(res.payout)+" coins");}
   else if(res.kind==="jackpot"){cls="jackpot";txt=`7️⃣ JACKPOT! +${fmt(res.payout)}`;pushNews("7️⃣ Lucky 7s — jackpot!");}
   else if(res.kind==="big"){cls="big";txt=`${res.label}  +${fmt(res.payout)}`;}
   else{cls="win";txt=`${res.label}  +${fmt(res.payout)}`;}
@@ -827,6 +957,8 @@ function updateStats(){
   document.getElementById("globalMult").textContent="×"+globalMult().toFixed(2);
   document.getElementById("spinCost").textContent=fmt(currentBet());
   const bc=document.getElementById("bonusCost");if(bc)bc.textContent=fmt(currentBet()*75);
+  const pm=document.getElementById("progMeter");if(pm)pm.innerHTML="💰 PROGRESSIVE JACKPOT &nbsp; "+fmt(S.progressive||0);
+  renderBonusBanner();
   const goal=GOALS.find(g=>!g.done);
   if(goal){document.getElementById("goalText").textContent=`Next: ${goal.label} — ${fmt(S.totalEarned)} / ${fmt(goal.amt)}`;
     document.getElementById("goalBar").style.width=Math.min(100,S.totalEarned/goal.amt*100)+"%";}
@@ -854,7 +986,7 @@ function renderGens(){const list=document.getElementById("genList");list.innerHT
     if(!unlocked){el.classList.add("locked");el.innerHTML=`<div class="ico">🔒</div><div class="body"><div class="name">???</div><div class="desc">Buy a ${GENS[i-1].name} to reveal.</div></div>`;list.appendChild(el);continue;}
     const each=g.cps*genMultFor(g.id);
     el.innerHTML=`<div class="ico">${g.ico}</div><div class="body"><div class="name">${g.name} ${o?`<span class="owned">×${o}</span>`:""}</div>
-      <div class="desc"><b style="color:var(--green)">${fmt(each)}/s</b> each${o?` · <span style="color:var(--gold)">${fmt(each*o)}/s</span> total`:""}</div></div>
+      <div class="desc">🎰 <b style="color:var(--green)">+${fmt(each)}/s</b> each${o?` · <span style="color:var(--gold)">${fmt(each*o)}/s</span> total`:""}</div></div>
       <div class="right"><div class="cost">${fmt(genCost(g,o))}</div></div>`;
     el.onclick=()=>buyGen(g.id);list.appendChild(el);}
   refreshAfford();}
@@ -1004,10 +1136,12 @@ document.getElementById("importBtn").onclick=()=>openModal("Import Save",`<p>Pas
 /* ============ input ============ */
 document.getElementById("spinBtn").onclick=()=>spin(true);
 document.getElementById("buyBonusBtn").onclick=buyBonus;
+document.getElementById("wheelBtn").onclick=openWheel;
 window.addEventListener("keydown",e=>{if(e.target.tagName==="TEXTAREA")return;
   if(e.code==="Space"){e.preventDefault();spin(true);}
   else if(e.key.toLowerCase()==="a"){S.auto=!S.auto;renderAuto();setupAuto();}
   else if(e.key.toLowerCase()==="b"){buyBonus();}
+  else if(e.key.toLowerCase()==="w"){openWheel();}
   else if(e.key.toLowerCase()==="m"){maxAffordableBet();}
   else if(e.key>="1"&&e.key<="6"){const i=+e.key-1;if(i<BETS.length){S.betIdx=i;renderBets();updateStats();}}});
 
