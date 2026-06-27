@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NEON SPIN — Idle Slots Empire</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎰</text></svg>">
+<style>
+  :root{
+    --bg:#08050f; --panel:#160a26; --panel2:#1f0f38; --panel3:#2a1450;
+    --neon:#ff2bd6; --neon2:#00e5ff; --gold:#ffd23f; --green:#33ff99;
+    --text:#f3e9ff; --dim:#9b86c4; --bad:#ff5577; --line:#3a1c5e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Segoe UI',system-ui,sans-serif;
+    background:radial-gradient(1200px 800px at 50% -10%, #2a0d4d 0%, var(--bg) 60%);
+    color:var(--text); overflow-x:hidden; -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-weight:800;letter-spacing:.5px}
+  .wrap{max-width:1240px;margin:0 auto;padding:14px 14px 70px}
+  header{text-align:center;margin-bottom:10px;position:relative}
+  header h1{
+    font-size:clamp(26px,5vw,50px);
+    background:linear-gradient(90deg,var(--neon),var(--gold),var(--neon2));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 30px rgba(255,43,214,.35);animation:hue 9s linear infinite;
+  }
+  @keyframes hue{to{filter:hue-rotate(360deg)}}
+  .sub{color:var(--dim);font-size:12.5px;margin-top:2px}
+  .news{height:22px;overflow:hidden;text-align:center;color:var(--neon2);font-size:13px;font-style:italic;margin-top:4px}
+  .gearbtn{position:absolute;top:0;right:0;background:#1a0d30;border:1px solid var(--line);color:var(--text);
+    width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:18px}
+  .gearbtn:hover{border-color:var(--neon2)}
+
+  .bankbar{
+    display:flex;flex-wrap:wrap;gap:10px 18px;justify-content:center;align-items:center;
+    background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--line);border-radius:16px;padding:11px 16px;margin:8px 0 14px;
+    box-shadow:0 0 24px rgba(0,229,255,.08),inset 0 0 30px rgba(255,43,214,.05);
+  }
+  .stat{text-align:center;min-width:96px}
+  .stat .label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+  .stat .val{font-size:clamp(16px,2.4vw,24px);font-weight:800;color:var(--gold);text-shadow:0 0 12px rgba(255,210,63,.4)}
+  .stat .val.cps{color:var(--green)}.stat .val.chips{color:var(--neon2)}
+  .stat .val.dim{color:var(--text)}.stat .val.neon{color:var(--neon)}
+
+  .buffbar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;min-height:0;margin-bottom:8px}
+  .buff{background:linear-gradient(90deg,var(--gold),#ff9d00);color:#190a2a;font-weight:800;font-size:12px;
+    padding:5px 12px;border-radius:20px;box-shadow:0 0 16px rgba(255,160,0,.5);animation:pulse 1s infinite}
+  .buff.streak{background:linear-gradient(90deg,var(--green),#11cc77)}
+  .buff.lucky{background:linear-gradient(90deg,var(--neon),#aa00ff);color:#fff}
+  @keyframes pulse{50%{transform:scale(1.05)}}
+
+  .grid{display:grid;grid-template-columns:1.12fr .88fr;gap:16px}
+  @media(max-width:920px){.grid{grid-template-columns:1fr}}
+  .card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+    border-radius:18px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+  .card h2{font-size:15px;text-transform:uppercase;letter-spacing:1.4px;color:var(--neon2);margin-bottom:11px;
+    display:flex;justify-content:space-between;align-items:center}
+
+  .machine{background:radial-gradient(120% 100% at 50% 0%,#2c1150,#100624);border:2px solid var(--neon);
+    border-radius:18px;padding:16px;box-shadow:0 0 35px rgba(255,43,214,.25),inset 0 0 40px rgba(0,0,0,.5);text-align:center}
+  .reels{display:flex;gap:8px;justify-content:center;margin:4px 0 12px}
+  .reel{width:84px;height:104px;border-radius:13px;overflow:hidden;background:linear-gradient(180deg,#06030d,#1a0d30);
+    border:2px solid #5a2c8a;position:relative;box-shadow:inset 0 8px 14px rgba(0,0,0,.7),inset 0 -8px 14px rgba(0,0,0,.7);flex:0 0 auto}
+  @media(max-width:520px){.reel{width:62px;height:80px}.sym{height:80px!important;font-size:40px!important}}
+  .reel.win{border-color:var(--gold);box-shadow:0 0 22px var(--gold),inset 0 0 18px rgba(255,210,63,.3)}
+  .reel::before,.reel::after{content:'';position:absolute;left:0;right:0;height:26px;z-index:3;pointer-events:none}
+  .reel::before{top:0;background:linear-gradient(180deg,rgba(8,5,15,.95),transparent)}
+  .reel::after{bottom:0;background:linear-gradient(0deg,rgba(8,5,15,.95),transparent)}
+  .strip{position:absolute;left:0;right:0;top:0;display:flex;flex-direction:column;will-change:transform}
+  .sym{height:104px;display:flex;align-items:center;justify-content:center;font-size:52px;line-height:1;filter:drop-shadow(0 0 8px rgba(255,255,255,.25))}
+  .payline{position:absolute;top:50%;left:-6px;right:-6px;height:2px;transform:translateY(-1px);
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);z-index:4;opacity:.85}
+
+  .betrow{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+  .betrow .label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+  .chip{background:#2a1450;border:1px solid #5a2c8a;color:var(--text);padding:5px 9px;border-radius:9px;cursor:pointer;font-weight:700;font-size:12.5px;transition:.12s}
+  .chip:hover{border-color:var(--neon2)}
+  .chip.active{background:var(--neon);border-color:var(--neon);color:#190a2a;box-shadow:0 0 14px rgba(255,43,214,.5)}
+  .chip.maxbet{background:#1a0d30;color:var(--gold)}.chip.maxbet.active{background:var(--gold);color:#190a2a}
+
+  .btn{border:none;border-radius:14px;cursor:pointer;font-weight:800;letter-spacing:.5px;padding:13px 20px;font-size:16px;color:#190a2a;
+    transition:transform .08s,filter .15s;background:linear-gradient(90deg,var(--gold),#ff9d00);box-shadow:0 6px 0 #a85f00,0 10px 22px rgba(255,160,0,.35)}
+  .btn:active{transform:translateY(3px);box-shadow:0 3px 0 #a85f00}
+  .btn:disabled{filter:grayscale(.7) brightness(.7);cursor:not-allowed}
+  .btn.big{width:100%;font-size:19px;padding:15px}
+  .btn.alt{background:linear-gradient(90deg,var(--neon2),#2b8cff);box-shadow:0 6px 0 #0a4a7a,0 10px 22px rgba(0,180,255,.3);color:#06121a}
+  .btn.alt:active{box-shadow:0 3px 0 #0a4a7a}
+  .btn.sm{font-size:14px;padding:10px 16px}
+  .autorow{display:flex;gap:12px;margin-top:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);cursor:pointer;user-select:none}
+  .switch{width:42px;height:22px;border-radius:20px;background:var(--line);position:relative;transition:.2s}
+  .switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#bba;transition:.2s}
+  .switch.on{background:var(--green)}.switch.on::after{left:22px;background:#06030d}
+
+  .result{min-height:28px;margin-top:11px;font-weight:800;font-size:17px}
+  .result.win{color:var(--gold);text-shadow:0 0 16px rgba(255,210,63,.6)}
+  .result.big{color:var(--green);animation:pop .4s}
+  .result.jackpot{color:var(--neon);font-size:22px;animation:shake .5s}
+  @keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px) rotate(-2deg)}40%{transform:translateX(8px) rotate(2deg)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+
+  .tabs{display:flex;gap:5px;margin-bottom:11px;flex-wrap:wrap}
+  .tab{flex:1;min-width:70px;text-align:center;padding:8px 4px;border-radius:9px;background:#1a0d30;border:1px solid var(--line);
+    cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);position:relative}
+  .tab.active{background:var(--neon);color:#190a2a;border-color:var(--neon)}
+  .tab .dot{position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);display:none}
+  .tab.notify .dot{display:block}
+  .list{display:flex;flex-direction:column;gap:8px;max-height:600px;overflow-y:auto;padding-right:4px}
+  .list::-webkit-scrollbar{width:8px}.list::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+  .item{display:flex;align-items:center;gap:11px;background:#1a0d30;border:1px solid var(--line);border-radius:12px;
+    padding:9px 11px;cursor:pointer;transition:.12s;position:relative;overflow:hidden}
+  .item:hover:not(.locked):not(.maxed){border-color:var(--neon2);background:#22113f}
+  .item.afford{border-color:#4a2c7a}.item.cant{opacity:.55}
+  .item.locked{opacity:.4;cursor:not-allowed;filter:grayscale(.6)}
+  .item.maxed{opacity:.85;cursor:default;border-color:var(--green)}
+  .item .ico{font-size:28px;width:40px;text-align:center;flex:0 0 auto}
+  .item .body{flex:1;min-width:0}
+  .item .name{font-weight:800;font-size:13.5px}
+  .item .desc{font-size:11.5px;color:var(--dim);line-height:1.3}
+  .item .right{text-align:right;white-space:nowrap}
+  .item .cost{font-weight:800;color:var(--gold);font-size:13.5px}
+  .item .cost.no{color:var(--bad)}.item .owned{font-size:11px;color:var(--neon2);font-weight:700}
+  .qtyrow{display:flex;gap:6px;justify-content:flex-end;margin-bottom:8px;align-items:center}
+  .qtybtn{font-size:11px;padding:4px 9px;border-radius:8px;background:#1a0d30;border:1px solid var(--line);color:var(--dim);cursor:pointer;font-weight:700}
+  .qtybtn.active{background:var(--neon2);color:#06030d;border-color:var(--neon2)}
+
+  .milestone{font-size:12px;color:var(--dim);margin-top:10px;text-align:center}
+  .barouter{height:9px;background:#1a0d30;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin-top:6px}
+  .barinner{height:100%;width:0;background:linear-gradient(90deg,var(--neon),var(--gold));transition:width .3s}
+
+  /* achievements grid */
+  .achgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:8px}
+  .ach{aspect-ratio:1;border-radius:12px;background:#140a24;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+    font-size:26px;cursor:help;position:relative;filter:grayscale(1) brightness(.5);transition:.2s}
+  .ach.got{filter:none;border-color:var(--gold);box-shadow:0 0 12px rgba(255,210,63,.3)}
+  .ach .tip{position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:#0a0612;border:1px solid var(--gold);
+    border-radius:8px;padding:7px 9px;width:160px;font-size:11px;color:var(--text);z-index:20;display:none;text-align:center;pointer-events:none}
+  .ach .tip b{color:var(--gold)}
+  .ach:hover .tip{display:block}
+
+  .stgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .stbox{background:#140a24;border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+  .stbox .k{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.7px}
+  .stbox .v{font-size:15px;font-weight:800;color:var(--gold);margin-top:2px}
+
+  .float{position:fixed;pointer-events:none;font-weight:800;font-size:17px;color:var(--gold);text-shadow:0 0 10px rgba(255,210,63,.7);z-index:50;animation:floatup 1s ease-out forwards}
+  @keyframes floatup{to{transform:translateY(-60px);opacity:0}}
+
+  /* golden spin */
+  #golden{position:fixed;font-size:46px;cursor:pointer;z-index:60;filter:drop-shadow(0 0 16px var(--gold));animation:gfloat 3s ease-in-out infinite,gspin 6s linear infinite;display:none}
+  @keyframes gfloat{50%{transform:translateY(-14px)}}
+  @keyframes gspin{to{filter:drop-shadow(0 0 16px var(--gold)) hue-rotate(360deg)}}
+
+  /* toast */
+  #toasts{position:fixed;right:14px;bottom:14px;z-index:80;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+  .toast{background:linear-gradient(180deg,var(--panel3),var(--panel));border:1px solid var(--gold);border-radius:12px;
+    padding:10px 14px;max-width:280px;box-shadow:0 8px 24px rgba(0,0,0,.5);animation:slidein .35s;display:flex;gap:10px;align-items:center}
+  .toast .ti{font-size:26px}.toast .tt{font-size:13px}.toast .tt b{color:var(--gold)}.toast .tt small{color:var(--dim);display:block;font-size:11px}
+  @keyframes slidein{from{transform:translateX(120%);opacity:0}}
+
+  .overlay{position:fixed;inset:0;background:rgba(5,2,12,.86);display:none;align-items:center;justify-content:center;z-index:100;padding:18px}
+  .overlay.show{display:flex;animation:fade .3s}
+  @keyframes fade{from{opacity:0}}
+  .modal{max-width:540px;width:100%;text-align:center;border-color:var(--gold);box-shadow:0 0 60px rgba(255,210,63,.4);max-height:90vh;overflow-y:auto}
+  .modal h2{justify-content:center;color:var(--gold);font-size:24px}
+  .modal p{color:var(--text);margin:9px 0;line-height:1.5;font-size:14px}
+  .modal .row{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+  .setline{display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line);font-size:14px}
+  .seg{display:flex;gap:4px}.seg button{font-size:12px;padding:5px 10px;border-radius:8px;background:#1a0d30;border:1px solid var(--line);color:var(--dim);cursor:pointer}
+  .seg button.on{background:var(--neon2);color:#06030d;border-color:var(--neon2)}
+
+  .footer{text-align:center;color:var(--dim);font-size:12px;margin-top:22px}
+  .linkbtn{color:var(--neon2);cursor:pointer;text-decoration:underline;background:none;border:none;font-size:12px}
+  kbd{background:#2a1450;border:1px solid #5a2c8a;border-radius:5px;padding:1px 6px;font-size:11px}
+  .ver{color:#5a4080;font-size:11px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <button class="gearbtn" id="gearBtn" title="Settings">⚙️</button>
+    <h1>◆ NEON SPIN ◆</h1>
+    <div class="sub">Idle Slots Empire — from one lucky quarter to the Infinite Jackpot <span class="ver" id="ver"></span></div>
+    <div class="news" id="news"></div>
+  </header>
+
+  <div class="bankbar">
+    <div class="stat"><div class="label">Coins</div><div class="val coins" id="coins">0</div></div>
+    <div class="stat"><div class="label">Per Second</div><div class="val cps" id="cps">0</div></div>
+    <div class="stat"><div class="label">VIP Chips</div><div class="val chips" id="chips">0</div></div>
+    <div class="stat"><div class="label">Spins</div><div class="val dim" id="spins">0</div></div>
+    <div class="stat"><div class="label">Luck</div><div class="val neon" id="luck">0%</div></div>
+    <div class="stat"><div class="label">Multiplier</div><div class="val cps" id="globalMult">×1</div></div>
+  </div>
+  <div class="buffbar" id="buffbar"></div>
+
+  <div class="grid">
+    <!-- LEFT -->
+    <div class="card">
+      <h2>Slot Machine <span style="font-size:11px;color:var(--dim)" id="reelInfo">3 reels</span></h2>
+      <div class="machine">
+        <div class="reels" id="reels"></div>
+        <div class="betrow">
+          <span class="label">Bet:</span><span id="betChips"></span>
+        </div>
+        <button class="btn big" id="spinBtn">SPIN ▸ <span id="spinCost">10</span></button>
+        <div class="autorow">
+          <label class="toggle" id="autoToggle"><span class="switch" id="autoSwitch"></span> Auto-Spin</label>
+          <span style="font-size:11px;color:var(--dim)" id="autoInfo"></span>
+        </div>
+        <div class="result" id="result">Press <kbd>SPACE</kbd> or click SPIN</div>
+      </div>
+      <h2 style="margin-top:14px">Paytable <span style="font-size:11px;color:var(--dim)">×bet · full line</span></h2>
+      <div class="list" id="paytable" style="max-height:230px"></div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="card">
+      <div class="tabs">
+        <div class="tab active" data-tab="gen">Build</div>
+        <div class="tab" data-tab="up">Upgrades<span class="dot"></span></div>
+        <div class="tab" data-tab="ach">Awards<span class="dot"></span></div>
+        <div class="tab" data-tab="vip">Prestige</div>
+        <div class="tab" data-tab="stats">Stats</div>
+      </div>
+
+      <div id="tab-gen">
+        <div class="qtyrow">
+          <span style="font-size:11px;color:var(--dim);margin-right:auto">Buy:</span>
+          <button class="qtybtn active" data-q="1">×1</button>
+          <button class="qtybtn" data-q="10">×10</button>
+          <button class="qtybtn" data-q="100">×100</button>
+          <button class="qtybtn" data-q="max">MAX</button>
+        </div>
+        <div class="list" id="genList"></div>
+        <div class="milestone" id="goalText"></div>
+        <div class="barouter"><div class="barinner" id="goalBar"></div></div>
+      </div>
+
+      <div id="tab-up" style="display:none"><div class="list" id="upList"></div></div>
+
+      <div id="tab-ach" style="display:none">
+        <div class="milestone" id="achHead" style="margin-top:0;margin-bottom:10px"></div>
+        <div class="achgrid" id="achGrid"></div>
+      </div>
+
+      <div id="tab-vip" style="display:none">
+        <p style="font-size:13px;color:var(--dim);line-height:1.5;margin-bottom:12px">
+          Cash out for <b style="color:var(--neon2)">VIP Chips</b> — each gives a permanent <b style="color:var(--gold)">+2%</b> to all coin gains.
+          Resets coins, generators &amp; upgrades. Chips, awards &amp; VIP perks are kept.</p>
+        <div class="item afford" id="prestigeBtn" style="cursor:pointer">
+          <div class="ico">💎</div>
+          <div class="body"><div class="name">Cash Out</div><div class="desc" id="prestigeDesc">—</div></div>
+          <div class="right"><div class="cost" id="prestigeGain" style="color:var(--neon2)">+0</div></div>
+        </div>
+        <div class="milestone" id="vipStat"></div>
+        <div style="margin-top:14px" class="list" id="vipUpList"></div>
+      </div>
+
+      <div id="tab-stats" style="display:none">
+        <div class="stgrid" id="statGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <button class="linkbtn" id="saveBtn">Save</button> ·
+    <button class="linkbtn" id="exportBtn">Export</button> ·
+    <button class="linkbtn" id="importBtn">Import</button> ·
+    <button class="linkbtn" id="settingsBtn">Settings</button> ·
+    <button class="linkbtn" id="wipeBtn" style="color:var(--bad)">Reset</button>
+    <div style="margin-top:6px"><kbd>Space</kbd> spin · <kbd>A</kbd> auto · <kbd>1-6</kbd> bet · <kbd>M</kbd> max bet</div>
+  </div>
+</div>
+
+<div id="golden" title="Click me!">✨</div>
+<div id="toasts"></div>
+
+<div class="overlay" id="overlay">
+  <div class="card modal">
+    <h2 id="mTitle">Title</h2>
+    <div id="mBody"></div>
+    <div class="row" id="mRow"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const VERSION="v2.0";
+document.getElementById("ver").textContent=VERSION;
+
+/* ============ number formatting ============ */
+const SUFFIX=["","K","M","B","T","Qa","Qi","Sx","Sp","Oc","No","Dc","UDc","DDc","TDc","QaDc","QiDc","SxDc","SpDc","OcDc","NoDc","Vg"];
+function fmt(n){
+  if(n===Infinity)return"∞"; if(isNaN(n))return"0"; if(n<0)return"-"+fmt(-n);
+  if(SET.notation==="sci" && n>=1e6) return n.toExponential(2).replace("e+","e");
+  if(n<1000)return(Math.floor(n)===n?n:n.toFixed(1)).toString();
+  let t=0; while(n>=1000&&t<SUFFIX.length-1){n/=1000;t++;}
+  return(n<10?n.toFixed(2):n<100?n.toFixed(1):Math.floor(n).toString())+SUFFIX[t];
+}
+function fmtInt(n){return Math.floor(n).toLocaleString();}
+function fmtTime(s){s=Math.floor(s);const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),ss=s%60;
+  if(d)return`${d}d ${h}h ${m}m`; if(h)return`${h}h ${m}m ${ss}s`; if(m)return`${m}m ${ss}s`; return`${ss}s`;}
+
+/* ============ symbols ============ */
+const SYMBOLS=[
+  {ch:"🍒",name:"Cherry", weight:34,three:3,   two:1},
+  {ch:"🍋",name:"Lemon",  weight:26,three:5,   two:1},
+  {ch:"🔔",name:"Bell",   weight:18,three:12,  two:2},
+  {ch:"⭐",name:"Star",   weight:11,three:30,  two:3},
+  {ch:"💎",name:"Diamond",weight:6, three:90,  two:6},
+  {ch:"7️⃣",name:"Lucky 7",weight:3, three:300, two:0,jackpot:true},
+  {ch:"🌌",name:"Galaxy", weight:1, three:2500,two:0,mega:true},
+];
+const BETS=[10,50,250,1000,5000,25000];
+
+/* ============ state ============ */
+const START_COINS=300;
+function newGame(){return{
+  coins:START_COINS,totalEarned:0,runEarned:0,spins:0,bestWin:0,manualSpins:0,autoSpins:0,
+  betIdx:0,auto:false,chips:0,chipsBanked:0,goldenClicked:0,
+  gens:{},ups:{},vips:{},ach:{},
+  prestiges:0,started:Date.now(),savedAt:Date.now(),playtime:0,
+  jackpots:0,megas:0,
+};}
+const S=newGame();
+const SET={sound:true,notation:"short",particles:true,golden:true};
+
+/* ============ generators ============ */
+const GENS=[
+  {id:"cat",   ico:"🐱",name:"Lucky Cat",       base:15,    cps:0.6},
+  {id:"bot",   ico:"🤖",name:"Slot Bot",        base:110,   cps:5},
+  {id:"lounge",ico:"🍸",name:"VIP Lounge",      base:1300,  cps:47},
+  {id:"floor", ico:"🎰",name:"Casino Floor",    base:16500, cps:380},
+  {id:"online",ico:"🌐",name:"Online Casino",   base:210000,cps:3100},
+  {id:"vault", ico:"🏦",name:"The Vault",       base:3.1e6, cps:25000},
+  {id:"city",  ico:"🌃",name:"Casino City",     base:4.6e7, cps:200000},
+  {id:"orbit", ico:"🛰️",name:"Orbital Casino",  base:7.2e8, cps:1.7e6},
+  {id:"galaxy",ico:"🌌",name:"Galactic Jackpot",base:1.3e10,cps:1.5e7},
+  {id:"nebula",ico:"🌠",name:"Nebula Resort",   base:2.4e11,cps:1.45e8},
+  {id:"hole",  ico:"🕳️",name:"Black Hole Bank", base:4.8e12,cps:1.35e9},
+  {id:"multi", ico:"🪐",name:"Multiverse Mint", base:1.05e14,cps:1.3e10},
+  {id:"deity", ico:"👁️",name:"Luck Deity",      base:2.5e15,cps:1.45e11},
+];
+function genCost(g,o){return Math.ceil(g.base*Math.pow(1.15,o));}
+function genCostN(g,o,n){let c=0;for(let i=0;i<n;i++)c+=genCost(g,o+i);return c;}
+function maxBuy(g,o,coins){let n=0,c=0;while(true){const x=genCost(g,o+n);if(c+x>coins)break;c+=x;n++;if(n>1e5)break;}return{n,cost:c};}
+
+/* ============ upgrades ============ */
+const UP=[
+  {id:"u_pay1",ico:"💰",name:"Polished Reels",cost:500,desc:"Spin payouts ×2",req:s=>s.spins>=5,eff:{payMult:2}},
+  {id:"u_luck1",ico:"🍀",name:"Four-Leaf Clover",cost:2500,desc:"+8% Luck",req:s=>s.spins>=15,eff:{luck:8}},
+  {id:"u_cat",ico:"🐟",name:"Premium Catnip",cost:4000,desc:"Lucky Cats ×3",req:s=>(s.gens.cat||0)>=10,eff:{gen:"cat",mult:3}},
+  {id:"u_auto1",ico:"⚡",name:"Hair Trigger",cost:9000,desc:"Auto-spin 35% faster",req:s=>s.spins>=40,eff:{autoSpeed:0.65}},
+  {id:"u_pay2",ico:"💰",name:"Gold Plating",cost:30000,desc:"Spin payouts ×2",req:s=>s.spins>=80,eff:{payMult:2}},
+  {id:"u_bot",ico:"🔧",name:"Overclocked Bots",cost:60000,desc:"Slot Bots ×3",req:s=>(s.gens.bot||0)>=10,eff:{gen:"bot",mult:3}},
+  {id:"u_luck2",ico:"🍀",name:"Rabbit's Foot",cost:120000,desc:"+10% Luck",req:s=>(s.gens.lounge||0)>=5,eff:{luck:10}},
+  {id:"u_reel4",ico:"🎟️",name:"Fourth Reel",cost:250000,desc:"Add a 4th reel — bigger lines!",req:s=>s.spins>=120,eff:{reels:4}},
+  {id:"u_all1",ico:"📈",name:"Loyalty Program",cost:500000,desc:"ALL generators ×1.5",req:s=>s.spins>=160,eff:{gen:"all",mult:1.5}},
+  {id:"u_lounge",ico:"🥂",name:"Bottomless Bar",cost:900000,desc:"VIP Lounges ×3",req:s=>(s.gens.lounge||0)>=25,eff:{gen:"lounge",mult:3}},
+  {id:"u_jack",ico:"7️⃣",name:"Rigged in Your Favor",cost:1.2e6,desc:"Lucky 7s 2× as common",req:s=>(s.gens.floor||0)>=10,eff:{jackpot:2}},
+  {id:"u_auto2",ico:"⚡",name:"Quantum Lever",cost:4e6,desc:"Auto-spin 40% faster",req:s=>!!s.ups.u_auto1,eff:{autoSpeed:0.6}},
+  {id:"u_floor",ico:"🎲",name:"Loose Machines",cost:7e6,desc:"Casino Floors ×3",req:s=>(s.gens.floor||0)>=25,eff:{gen:"floor",mult:3}},
+  {id:"u_pay3",ico:"💎",name:"Diamond Reels",cost:1.5e7,desc:"Spin payouts ×3",req:s=>s.spins>=400,eff:{payMult:3}},
+  {id:"u_reel5",ico:"🎟️",name:"Fifth Reel",cost:4e7,desc:"Add a 5th reel — massive lines!",req:s=>!!s.ups.u_reel4&&s.spins>=500,eff:{reels:5}},
+  {id:"u_all2",ico:"📈",name:"Monopoly",cost:8e7,desc:"ALL generators ×2",req:s=>(s.gens.online||0)>=10,eff:{gen:"all",mult:2}},
+  {id:"u_online",ico:"📡",name:"Viral Marketing",cost:3e8,desc:"Online Casinos ×3",req:s=>(s.gens.online||0)>=25,eff:{gen:"online",mult:3}},
+  {id:"u_luck3",ico:"🌟",name:"Pact with Fortune",cost:5e8,desc:"+12% Luck",req:s=>(s.gens.vault||0)>=5,eff:{luck:12}},
+  {id:"u_vault",ico:"💵",name:"Compound Interest",cost:2e9,desc:"The Vaults ×3",req:s=>(s.gens.vault||0)>=25,eff:{gen:"vault",mult:3}},
+  {id:"u_all3",ico:"🚀",name:"Hostile Takeover",cost:1e10,desc:"ALL generators ×3",req:s=>(s.gens.city||0)>=10,eff:{gen:"all",mult:3}},
+  {id:"u_city",ico:"🏙️",name:"Urban Sprawl",cost:6e10,desc:"Casino Cities ×3",req:s=>(s.gens.city||0)>=25,eff:{gen:"city",mult:3}},
+  {id:"u_luck4",ico:"🔆",name:"Blessed Reels",cost:3e11,desc:"+15% Luck",req:s=>(s.gens.orbit||0)>=5,eff:{luck:15}},
+  {id:"u_mega",ico:"🌌",name:"Cosmic Alignment",cost:5e11,desc:"Galaxy symbols 3× as common",req:s=>(s.gens.orbit||0)>=10,eff:{megaUp:3}},
+  {id:"u_orbit",ico:"🚀",name:"Zero-G Spins",cost:2e12,desc:"Orbital Casinos ×3",req:s=>(s.gens.orbit||0)>=25,eff:{gen:"orbit",mult:3}},
+  {id:"u_all4",ico:"♾️",name:"Universal Franchise",cost:2e13,desc:"ALL generators ×3",req:s=>(s.gens.galaxy||0)>=10,eff:{gen:"all",mult:3}},
+  {id:"u_pay4",ico:"👑",name:"Royal Flush Reels",cost:1e14,desc:"Spin payouts ×4",req:s=>s.spins>=1200,eff:{payMult:4}},
+  {id:"u_all5",ico:"🌠",name:"Cosmic Empire",cost:5e15,desc:"ALL generators ×4",req:s=>(s.gens.nebula||0)>=10,eff:{gen:"all",mult:4}},
+  {id:"u_luck5",ico:"👁️",name:"Eye of Fortune",cost:1e17,desc:"+25% Luck",req:s=>(s.gens.hole||0)>=10,eff:{luck:25}},
+  {id:"u_all6",ico:"💫",name:"Heat Death Economy",cost:1e18,desc:"ALL generators ×5",req:s=>(s.gens.multi||0)>=10,eff:{gen:"all",mult:5}},
+];
+
+/* ============ VIP / prestige perks ============ */
+const VIPS=[
+  {id:"v_start",ico:"🎁",name:"Welcome Package",cost:1,max:5,desc:"Start runs with more coins"},
+  {id:"v_pay",  ico:"💵",name:"VIP Payouts",   cost:2,max:8,desc:"+25% manual payouts / lvl"},
+  {id:"v_gen",  ico:"🏭",name:"VIP Production", cost:3,max:8,desc:"+20% generator income / lvl"},
+  {id:"v_luck", ico:"🔮",name:"VIP Fortune",    cost:4,max:6,desc:"+5% Luck / lvl"},
+  {id:"v_auto", ico:"♾️",name:"VIP Automation",  cost:5,max:5,desc:"Auto-spin 15% faster / lvl"},
+  {id:"v_gold", ico:"✨",name:"VIP Magnetism",  cost:4,max:5,desc:"Golden spins +20% more often / lvl"},
+  {id:"v_keep", ico:"🏦",name:"Head Start",     cost:8,max:4,desc:"Keep 5% of cps as starting coins / lvl"},
+];
+function vipCost(v,l){return v.cost*(l+1);}
+function chipsFor(earned){return earned<1e6?0:Math.floor(Math.pow(earned/1e6,0.42));}
+
+/* ============ achievements ============ */
+const ACH=[
+  {id:"a_first",ico:"🎰",name:"First Pull",desc:"Spin once",c:s=>s.spins>=1},
+  {id:"a_s100",ico:"🔁",name:"Getting Started",desc:"100 spins",c:s=>s.spins>=100},
+  {id:"a_s1k",ico:"🌀",name:"Lever Addict",desc:"1,000 spins",c:s=>s.spins>=1000},
+  {id:"a_s10k",ico:"🎯",name:"Machine Whisperer",desc:"10,000 spins",c:s=>s.spins>=10000},
+  {id:"a_jack",ico:"7️⃣",name:"Lucky Sevens",desc:"Hit a 7s jackpot",c:s=>s.jackpots>=1},
+  {id:"a_jack10",ico:"💴",name:"Seventh Heaven",desc:"10 jackpots",c:s=>s.jackpots>=10},
+  {id:"a_mega",ico:"🌌",name:"Cosmic Luck",desc:"Hit a Galaxy mega-jackpot",c:s=>s.megas>=1},
+  {id:"a_c1k",ico:"🪙",name:"Pocket Change",desc:"1K coins earned",c:s=>s.totalEarned>=1e3},
+  {id:"a_c1m",ico:"💰",name:"Millionaire",desc:"1M coins earned",c:s=>s.totalEarned>=1e6},
+  {id:"a_c1b",ico:"🤑",name:"Billionaire",desc:"1B coins earned",c:s=>s.totalEarned>=1e9},
+  {id:"a_c1t",ico:"💸",name:"Trillionaire",desc:"1T coins earned",c:s=>s.totalEarned>=1e12},
+  {id:"a_c1qa",ico:"🏆",name:"Beyond Money",desc:"1Qa coins earned",c:s=>s.totalEarned>=1e15},
+  {id:"a_cat",ico:"🐱",name:"Cat Lady",desc:"50 Lucky Cats",c:s=>(s.gens.cat||0)>=50},
+  {id:"a_bot",ico:"🤖",name:"Robot Uprising",desc:"50 Slot Bots",c:s=>(s.gens.bot||0)>=50},
+  {id:"a_floor",ico:"🎰",name:"House Always Wins",desc:"50 Casino Floors",c:s=>(s.gens.floor||0)>=50},
+  {id:"a_g100",ico:"🏗️",name:"Empire Builder",desc:"100 of any generator",c:s=>Object.values(s.gens).some(v=>v>=100)},
+  {id:"a_alltier",ico:"🌐",name:"Diversified",desc:"Own every generator type",c:s=>GENS.every(g=>(s.gens[g.id]||0)>=1)},
+  {id:"a_reel4",ico:"🎟️",name:"Four on the Floor",desc:"Unlock the 4th reel",c:s=>!!s.ups.u_reel4},
+  {id:"a_reel5",ico:"🖐️",name:"High Five",desc:"Unlock the 5th reel",c:s=>!!s.ups.u_reel5},
+  {id:"a_up10",ico:"🛒",name:"Shopaholic",desc:"Buy 10 upgrades",c:s=>Object.keys(s.ups).length>=10},
+  {id:"a_upall",ico:"✅",name:"Completionist",desc:"Buy every upgrade",c:s=>UP.every(u=>s.ups[u.id])},
+  {id:"a_luck50",ico:"🍀",name:"Fortune's Fool",desc:"Reach 50% Luck",c:s=>luckPct()>=50},
+  {id:"a_luck100",ico:"🌈",name:"Probability Bender",desc:"Reach 100% Luck",c:s=>luckPct()>=100},
+  {id:"a_p1",ico:"💎",name:"VIP Member",desc:"Prestige once",c:s=>s.prestiges>=1},
+  {id:"a_p5",ico:"💠",name:"Whale",desc:"Prestige 5 times",c:s=>s.prestiges>=5},
+  {id:"a_chip100",ico:"🔷",name:"Chip Stack",desc:"Own 100 VIP chips",c:s=>s.chips>=100},
+  {id:"a_gold",ico:"✨",name:"Eagle Eye",desc:"Click a golden spin",c:s=>s.goldenClicked>=1},
+  {id:"a_gold25",ico:"🌟",name:"Sharpshooter",desc:"Click 25 golden spins",c:s=>s.goldenClicked>=25},
+  {id:"a_win1m",ico:"🎆",name:"Big Win",desc:"Win 1M in one spin",c:s=>s.bestWin>=1e6},
+  {id:"a_win1b",ico:"🎇",name:"Life-Changing",desc:"Win 1B in one spin",c:s=>s.bestWin>=1e9},
+  {id:"a_time1h",ico:"⏰",name:"Dedicated",desc:"Play for 1 hour",c:s=>s.playtime>=3600},
+  {id:"a_end",ico:"♾️",name:"Infinite Jackpot",desc:"Beat the game",c:s=>s.totalEarned>=1e18},
+];
+function achCount(){return Object.keys(S.ach).length;}
+function achMult(){return 1+achCount()*0.01;}
+
+/* ============ buffs / golden ============ */
+let buffs={}; // name -> {mult, until, kind, label}
+function buffMult(){let m=1;const now=Date.now();for(const k in buffs){if(buffs[k].until>now)m*=buffs[k].mult;else delete buffs[k];}return m;}
+function luckBuff(){const now=Date.now();return (buffs.lucky&&buffs.lucky.until>now)?buffs.lucky.luck:0;}
+
+/* ============ derived ============ */
+function luckPct(){let l=0;for(const u of UP)if(S.ups[u.id]&&u.eff.luck)l+=u.eff.luck;l+=(S.vips.v_luck||0)*5;l+=luckBuff();return l;}
+function chipMult(){return 1+S.chips*0.02;}
+function payMult(){let m=1;for(const u of UP)if(S.ups[u.id]&&u.eff.payMult)m*=u.eff.payMult;m*=1+(S.vips.v_pay||0)*0.25;m*=chipMult();m*=achMult();m*=buffMult();return m;}
+function genMultFor(id){let m=1;for(const u of UP)if(S.ups[u.id]&&u.eff.gen){if(u.eff.gen==="all"||u.eff.gen===id)m*=u.eff.mult;}m*=1+(S.vips.v_gen||0)*0.2;m*=chipMult();m*=achMult();m*=buffMult();return m;}
+function reelCount(){let r=3;for(const u of UP)if(S.ups[u.id]&&u.eff.reels)r=Math.max(r,u.eff.reels);return r;}
+function autoInterval(){let b=1200;for(const u of UP)if(S.ups[u.id]&&u.eff.autoSpeed)b*=u.eff.autoSpeed;b*=Math.pow(0.85,S.vips.v_auto||0);return Math.max(90,b);}
+function jackpotBoost(){return S.ups.u_jack?2:1;}
+function megaBoost(){return S.ups.u_mega?3:1;}
+function globalMult(){return chipMult()*achMult()*buffMult();}
+function cps(){let t=0;for(const g of GENS){const n=S.gens[g.id]||0;if(n>0)t+=n*g.cps*genMultFor(g.id);}return t;}
+
+/* ============ reel weights ============ */
+function weightedSymbols(){
+  const l=luckPct()/100;
+  return SYMBOLS.map(s=>{let w=s.weight;const rb=s.three/3;w*=1+l*Math.log2(rb+1)*0.6;if(s.jackpot)w*=jackpotBoost();if(s.mega)w*=megaBoost();return{s,w};});
+}
+function pickSymbol(pool,tw){let r=Math.random()*tw;for(const e of pool){r-=e.w;if(r<=0)return e.s;}return pool[pool.length-1].s;}
+
+/* ============ machine DOM ============ */
+const SH=104, STRIP_LEN=24;
+let strips=[];
+function renderMachine(){
+  const rc=reelCount();
+  const wrap=document.getElementById("reels");
+  wrap.innerHTML="";
+  strips=[];
+  for(let i=0;i<rc;i++){
+    const reel=document.createElement("div");reel.className="reel";reel.id="reel"+i;
+    const strip=document.createElement("div");strip.className="strip";strip.id="strip"+i;
+    reel.appendChild(strip);
+    if(i===rc-1){const pl=document.createElement("div");pl.className="payline";reel.appendChild(pl);}
+    wrap.appendChild(reel);
+    strips.push(strip);
+  }
+  strips.forEach(el=>{setStripFinal(el,SYMBOLS[Math.floor(Math.random()*5)]);el.style.transform=`translateY(${-((STRIP_LEN-2)*SH)}px)`;});
+  document.getElementById("reelInfo").textContent=rc+" reels";
+}
+function setStripFinal(el,sym){
+  el.innerHTML="";
+  for(let i=0;i<STRIP_LEN;i++){const d=document.createElement("div");d.className="sym";
+    d.textContent=(i===STRIP_LEN-2)?sym.ch:SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)].ch;el.appendChild(d);}
+}
+
+/* ============ spin ============ */
+let spinning=false;
+function currentBet(){return BETS[S.betIdx];}
+function evaluate(finals){
+  const bet=currentBet(),mult=payMult(),rc=finals.length;
+  const counts=new Map();let best=null,bestN=0;
+  for(const s of finals){const n=(counts.get(s)||0)+1;counts.set(s,n);if(n>bestN){bestN=n;best=s;}}
+  // full line
+  if(bestN===rc){const bonus=rc===3?1:rc===4?2.5:6;
+    const payout=best.three*bet*mult*bonus;
+    let kind=best.mega?"mega":best.jackpot?"jackpot":(best.three>=30?"big":"win");
+    return{payout,kind,label:`${best.name} ×${rc}!`,win:[...Array(rc).keys()]};}
+  // near miss (rc-1)
+  if(bestN===rc-1 && rc>=4){const v=best.two>0?best.two:best.three*0.05;
+    return{payout:v*bet*mult*(rc===5?3:1.5),kind:"win",label:`${best.name} ×${bestN}`,win:idxOf(finals,best)};}
+  // pair on 3 reels
+  if(rc===3 && bestN===2 && best.two>0){return{payout:best.two*bet*mult,kind:"win",label:`${best.name} pair`,win:idxOf(finals,best)};}
+  // small pair on 4/5
+  if(bestN===2 && best.two>0 && rc>=4){return{payout:best.two*bet*mult*0.4,kind:"win",label:`${best.name} pair`,win:idxOf(finals,best)};}
+  return{payout:0,kind:"lose",label:"No win",win:[]};
+}
+function idxOf(arr,sym){const r=[];arr.forEach((s,i)=>{if(s===sym)r.push(i);});return r;}
+
+async function spin(manual){
+  if(spinning)return false;
+  const bet=currentBet();
+  if(S.coins<bet){if(manual){flashResult("Not enough coins!","");beep(160,0.08);}return false;}
+  spinning=true;S.coins-=bet;S.spins++;if(manual)S.manualSpins++;else S.autoSpins++;
+  const btn=document.getElementById("spinBtn");btn.disabled=true;
+  document.querySelectorAll(".reel").forEach(r=>r.classList.remove("win"));
+  const pool=weightedSymbols();const tw=pool.reduce((a,e)=>a+e.w,0);
+  const rc=reelCount();const finals=[];for(let i=0;i<rc;i++)finals.push(pickSymbol(pool,tw));
+  const dur=manual?620:Math.min(360,autoInterval()*0.55);
+  beep(330,0.03);
+  await animateReels(finals,dur);
+  const res=evaluate(finals);
+  if(res.payout>0){
+    S.coins+=res.payout;S.totalEarned+=res.payout;S.runEarned+=res.payout;
+    if(res.payout>S.bestWin)S.bestWin=res.payout;
+    if(res.kind==="jackpot")S.jackpots++;if(res.kind==="mega")S.megas++;
+    res.win.forEach(i=>{const r=document.getElementById("reel"+i);if(r)r.classList.add("win");});
+    showWin(res);spawnFloat(res.payout);
+    if(res.kind==="mega"){beep(880,0.5,"sawtooth");bigConfetti();}
+    else if(res.kind==="jackpot"){beep(660,0.35,"square");bigConfetti();}
+    else if(res.kind==="big")beep(520,0.18);
+    else beep(440,0.08);
+  }else if(manual){flashResult("— "+res.label+" —","");}
+  // lucky streak consume
+  if(buffs.lucky){buffs.lucky.left--;if(buffs.lucky.left<=0)delete buffs.lucky;}
+  spinning=false;btn.disabled=false;
+  updateUI();checkAchievements();checkEnding();
+  return true;
+}
+function animateReels(finals,dur){
+  return new Promise(res=>{
+    finals.forEach((sym,i)=>{const el=strips[i];if(!el)return;setStripFinal(el,sym);
+      el.style.transition="none";el.style.transform=`translateY(${-(STRIP_LEN*SH)}px)`;void el.offsetHeight;
+      const d=dur+i*110;el.style.transition=`transform ${d}ms cubic-bezier(.18,.7,.2,1)`;
+      el.style.transform=`translateY(${-((STRIP_LEN-2)*SH)}px)`;});
+    setTimeout(res,dur+(finals.length-1)*110+30);
+  });
+}
+function flashResult(t,c){const r=document.getElementById("result");r.className="result "+c;r.textContent=t;}
+function showWin(res){const r=document.getElementById("result");let cls="win",txt="";
+  if(res.kind==="mega"){cls="jackpot";txt=`🌌 MEGA JACKPOT! +${fmt(res.payout)} 🌌`;pushNews("🌌 GALACTIC MEGA JACKPOT hit!");toast("🌌","MEGA JACKPOT!","+"+fmt(res.payout)+" coins");}
+  else if(res.kind==="jackpot"){cls="jackpot";txt=`7️⃣ JACKPOT! +${fmt(res.payout)}`;pushNews("7️⃣ Lucky 7s — jackpot!");}
+  else if(res.kind==="big"){cls="big";txt=`${res.label}  +${fmt(res.payout)}`;}
+  else{cls="win";txt=`${res.label}  +${fmt(res.payout)}`;}
+  r.className="result "+cls;r.textContent=txt;}
+function spawnFloat(a){if(!SET.particles)return;const b=document.getElementById("spinBtn").getBoundingClientRect();
+  const f=document.createElement("div");f.className="float";f.textContent="+"+fmt(a);
+  f.style.left=(b.left+b.width/2-20+(Math.random()*40-20))+"px";f.style.top=(b.top-10)+"px";
+  document.body.appendChild(f);setTimeout(()=>f.remove(),1000);}
+function bigConfetti(){if(!SET.particles)return;const em=["💰","✨","🪙","💎","⭐","🎉"];
+  for(let i=0;i<22;i++){const f=document.createElement("div");f.className="float";f.textContent=em[i%em.length];
+    f.style.left=(Math.random()*window.innerWidth)+"px";f.style.top=(window.innerHeight*0.5)+"px";f.style.fontSize=(20+Math.random()*20)+"px";
+    f.style.animationDuration=(0.8+Math.random())+"s";document.body.appendChild(f);setTimeout(()=>f.remove(),1800);}}
+
+/* ============ sound ============ */
+let actx=null;
+function beep(freq,dur,type="sine"){if(!SET.sound)return;try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
+  const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(0.06,actx.currentTime);g.gain.exponentialRampToValueAtTime(0.0001,actx.currentTime+dur);
+  o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+dur);}catch(e){}}
+
+/* ============ idle loop ============ */
+let lastTick=Date.now();
+function tick(){const now=Date.now();const dt=(now-lastTick)/1000;lastTick=now;
+  S.playtime+=dt;const inc=cps()*dt;if(inc>0){S.coins+=inc;S.totalEarned+=inc;S.runEarned+=inc;}
+  updateStats();checkAchievements();checkEnding();maybeGolden(dt);}
+setInterval(tick,100);
+
+/* ============ auto spin ============ */
+let autoTimer=null;
+function setupAuto(){if(autoTimer)clearTimeout(autoTimer);if(!S.auto)return;
+  const loop=async()=>{if(S.auto&&!spinning)await spin(false);autoTimer=setTimeout(loop,autoInterval());};
+  autoTimer=setTimeout(loop,autoInterval());}
+
+/* ============ golden spin ============ */
+let goldenTimer=18+Math.random()*22;
+function goldenInterval(){return (70+Math.random()*70)/(1+(S.vips.v_gold||0)*0.2);}
+function maybeGolden(dt){if(!SET.golden)return;const el=document.getElementById("golden");if(el.style.display==="block")return;
+  goldenTimer-=dt;if(goldenTimer<=0){spawnGolden();goldenTimer=goldenInterval();}}
+function spawnGolden(){const el=document.getElementById("golden");
+  el.style.left=(40+Math.random()*(window.innerWidth-120))+"px";
+  el.style.top=(110+Math.random()*(window.innerHeight-220))+"px";
+  el.style.display="block";const icons=["✨","🌟","💫","⭐"];el.textContent=icons[Math.floor(Math.random()*icons.length)];
+  clearTimeout(el._h);el._h=setTimeout(()=>{el.style.display="none";},11000);}
+document.getElementById("golden").onclick=function(){this.style.display="none";clearTimeout(this._h);
+  S.goldenClicked++;beep(700,0.12,"triangle");
+  const roll=Math.random();
+  if(roll<0.4){buffs.frenzy={mult:7,until:Date.now()+15000,kind:"frenzy",label:"🔥 FRENZY ×7"};toast("🔥","Frenzy!","All income ×7 for 15s");}
+  else if(roll<0.7){const amt=Math.max(currentBet()*50,cps()*900);S.coins+=amt;S.totalEarned+=amt;S.runEarned+=amt;toast("💰","Cash Drop!","+"+fmt(amt)+" coins");spawnFloat(amt);}
+  else if(roll<0.9){buffs.lucky={mult:1,luck:200,until:Date.now()+999999,left:8,kind:"lucky",label:"🍀 LUCKY ×8 spins"};toast("🍀","Lucky Streak!","Next 8 spins: huge luck");}
+  else{buffs.frenzy={mult:25,until:Date.now()+10000,kind:"frenzy",label:"🌈 MEGA FRENZY ×25"};toast("🌈","MEGA FRENZY!","All income ×25 for 10s!");}
+  checkAchievements();renderBuffs();};
+
+/* ============ buffs UI ============ */
+function renderBuffs(){const bar=document.getElementById("buffbar");bar.innerHTML="";const now=Date.now();
+  for(const k in buffs){const b=buffs[k];if(b.kind==="lucky"){if(!b.left)continue;
+      const d=document.createElement("div");d.className="buff lucky";d.textContent=`🍀 Lucky ×${b.left}`;bar.appendChild(d);}
+    else if(b.until>now){const left=Math.ceil((b.until-now)/1000);const d=document.createElement("div");
+      d.className="buff"+(b.mult>=25?" lucky":"");d.textContent=`${b.label} (${left}s)`;bar.appendChild(d);}}}
+setInterval(renderBuffs,250);
+
+/* ============ rendering ============ */
+let buyQty=1,curTab="gen";
+function updateStats(){
+  document.getElementById("coins").textContent=fmt(S.coins);
+  document.getElementById("cps").textContent=fmt(cps()*buffMult())+"/s";
+  document.getElementById("chips").textContent=fmtInt(S.chips);
+  document.getElementById("spins").textContent=fmtInt(S.spins);
+  document.getElementById("luck").textContent=Math.round(luckPct())+"%";
+  document.getElementById("globalMult").textContent="×"+globalMult().toFixed(2);
+  document.getElementById("spinCost").textContent=fmt(currentBet());
+  const goal=GOALS.find(g=>!g.done);
+  if(goal){document.getElementById("goalText").textContent=`Next: ${goal.label} — ${fmt(S.totalEarned)} / ${fmt(goal.amt)}`;
+    document.getElementById("goalBar").style.width=Math.min(100,S.totalEarned/goal.amt*100)+"%";}
+  else{document.getElementById("goalText").textContent="All milestones complete — legend.";document.getElementById("goalBar").style.width="100%";}
+  refreshAfford();updateNotifyDots();
+}
+function refreshAfford(){
+  document.querySelectorAll("[data-gen]").forEach(el=>{const id=el.getAttribute("data-gen");const g=GENS.find(x=>x.id===id);const o=S.gens[id]||0;
+    let n=buyQty==="max"?maxBuy(g,o,S.coins).n:buyQty;if(buyQty==="max"&&n<1)n=1;const cost=genCostN(g,o,n);
+    const ce=el.querySelector(".cost");if(ce){ce.textContent=fmt(cost)+(n>1?` ×${n}`:"");ce.classList.toggle("no",S.coins<cost);}
+    el.classList.toggle("afford",S.coins>=cost);el.classList.toggle("cant",S.coins<cost);});
+  document.querySelectorAll("[data-up]").forEach(el=>{const u=UP.find(x=>x.id===el.getAttribute("data-up"));const ce=el.querySelector(".cost");
+    if(u&&ce){ce.classList.toggle("no",S.coins<u.cost);el.classList.toggle("afford",S.coins>=u.cost);}});
+}
+function updateNotifyDots(){
+  const canUp=UP.some(u=>!S.ups[u.id]&&u.req(S)&&S.coins>=u.cost);
+  document.querySelector('.tab[data-tab="up"]').classList.toggle("notify",canUp);
+  const pendAch=ACH.some(a=>!S.ach[a.id]&&a.c(S));
+  document.querySelector('.tab[data-tab="ach"]').classList.toggle("notify",pendAch);
+}
+function renderGens(){const list=document.getElementById("genList");list.innerHTML="";
+  for(let i=0;i<GENS.length;i++){const g=GENS[i];const o=S.gens[g.id]||0;
+    const unlocked=i===0||(S.gens[GENS[i-1].id]||0)>=1||o>0;
+    const el=document.createElement("div");el.className="item";el.setAttribute("data-gen",g.id);
+    if(!unlocked){el.classList.add("locked");el.innerHTML=`<div class="ico">🔒</div><div class="body"><div class="name">???</div><div class="desc">Buy a ${GENS[i-1].name} to reveal.</div></div>`;list.appendChild(el);continue;}
+    const each=g.cps*genMultFor(g.id);
+    el.innerHTML=`<div class="ico">${g.ico}</div><div class="body"><div class="name">${g.name} ${o?`<span class="owned">×${o}</span>`:""}</div>
+      <div class="desc"><b style="color:var(--green)">${fmt(each)}/s</b> each${o?` · <span style="color:var(--gold)">${fmt(each*o)}/s</span> total`:""}</div></div>
+      <div class="right"><div class="cost">${fmt(genCost(g,o))}</div></div>`;
+    el.onclick=()=>buyGen(g.id);list.appendChild(el);}
+  refreshAfford();}
+function buyGen(id){const g=GENS.find(x=>x.id===id);const o=S.gens[id]||0;let n,cost;
+  if(buyQty==="max"){const m=maxBuy(g,o,S.coins);n=m.n;cost=m.cost;if(n<1)return;}else{n=buyQty;cost=genCostN(g,o,n);}
+  if(S.coins<cost)return;S.coins-=cost;S.gens[id]=o+n;beep(300,0.04);renderGens();renderUps();updateStats();checkAchievements();}
+function renderUps(){const list=document.getElementById("upList");list.innerHTML="";let shown=0;
+  for(const u of UP){if(S.ups[u.id]||!u.req(S))continue;shown++;
+    const el=document.createElement("div");el.className="item";el.setAttribute("data-up",u.id);
+    el.innerHTML=`<div class="ico">${u.ico}</div><div class="body"><div class="name">${u.name}</div><div class="desc">${u.desc}</div></div><div class="right"><div class="cost">${fmt(u.cost)}</div></div>`;
+    el.onclick=()=>{if(S.coins>=u.cost){S.coins-=u.cost;S.ups[u.id]=true;beep(560,0.1);if(u.eff.reels)renderMachine();renderUps();renderGens();updateStats();setupAuto();checkAchievements();toast(u.ico,"Upgrade!",u.name);}};
+    list.appendChild(el);}
+  if(!shown)list.innerHTML=`<div style="color:var(--dim);font-size:13px;text-align:center;padding:20px">No upgrades available yet.<br>Spin &amp; build to unlock more.</div>`;
+  refreshAfford();}
+function renderPaytable(){const pt=document.getElementById("paytable");pt.innerHTML="";const rc=reelCount();const bonus=rc===3?1:rc===4?2.5:6;
+  for(const s of SYMBOLS){const el=document.createElement("div");el.className="item";el.style.cursor="default";
+    const two=s.two>0?`· pair ×${s.two}`:"";const tag=s.jackpot?' <span style="color:var(--neon)">JACKPOT</span>':s.mega?' <span style="color:var(--neon2)">MEGA</span>':"";
+    el.innerHTML=`<div class="ico">${s.ch.repeat(Math.min(rc,3))}</div><div class="body"><div class="name">${s.name}${tag}</div><div class="desc">Full line ${two}</div></div>
+      <div class="right"><div class="cost" style="color:var(--gold)">×${fmt(s.three*bonus)}</div></div>`;pt.appendChild(el);}}
+function renderBets(){const w=document.getElementById("betChips");w.innerHTML="";
+  BETS.forEach((b,i)=>{const c=document.createElement("button");c.className="chip"+(i===S.betIdx?" active":"");c.textContent=fmt(b);
+    c.onclick=()=>{S.betIdx=i;renderBets();updateStats();};w.appendChild(c);});
+  const mx=document.createElement("button");mx.className="chip maxbet"+(S.betIdx===BETS.length-1?" active":"");mx.textContent="MAX";
+  mx.onclick=()=>{maxAffordableBet();};w.appendChild(mx);}
+function maxAffordableBet(){let idx=0;for(let i=BETS.length-1;i>=0;i--){if(S.coins>=BETS[i]){idx=i;break;}}S.betIdx=idx;renderBets();updateStats();}
+
+function renderAch(){const grid=document.getElementById("achGrid");grid.innerHTML="";
+  document.getElementById("achHead").innerHTML=`<b style="color:var(--gold)">${achCount()}/${ACH.length}</b> awards · each gives <b style="color:var(--green)">+1%</b> to all gains (currently <b style="color:var(--green)">×${achMult().toFixed(2)}</b>)`;
+  for(const a of ACH){const el=document.createElement("div");el.className="ach"+(S.ach[a.id]?" got":"");
+    el.innerHTML=`${S.ach[a.id]?a.ico:"❔"}<div class="tip"><b>${a.name}</b><br>${a.desc}${S.ach[a.id]?'<br>✅ Unlocked':''}</div>`;grid.appendChild(el);}}
+function checkAchievements(){let any=false;for(const a of ACH){if(!S.ach[a.id]&&a.c(S)){S.ach[a.id]=Date.now();any=true;toast(a.ico,"Award Unlocked!",a.name+" · +1% all gains");beep(620,0.14,"triangle");}}
+  if(any){if(curTab==="ach")renderAch();updateStats();}}
+
+function renderVip(){const pending=Math.max(0,chipsFor(S.totalEarned)-S.chipsBanked);
+  document.getElementById("prestigeGain").textContent="+"+fmtInt(pending);
+  const nextNeed=Math.pow(S.chipsBanked+1,1/0.42)*1e6;
+  document.getElementById("prestigeDesc").textContent=pending>0?`Cash out for ${fmtInt(pending)} chip${pending>1?'s':''} → ×${(1+(S.chips+pending)*0.02).toFixed(2)} bonus.`:`Earn ${fmt(nextNeed)} total coins for your next chip.`;
+  document.getElementById("vipStat").textContent=`${fmtInt(S.chips)} chips · ×${chipMult().toFixed(2)} permanent · ${S.prestiges} prestiges`;
+  document.getElementById("prestigeBtn").classList.toggle("cant",pending<1);
+  const list=document.getElementById("vipUpList");list.innerHTML="";
+  for(const v of VIPS){const lvl=S.vips[v.id]||0;const el=document.createElement("div");el.className="item";
+    if(lvl>=v.max){el.classList.add("maxed");el.innerHTML=`<div class="ico">${v.ico}</div><div class="body"><div class="name">${v.name} <span class="owned">MAX</span></div><div class="desc">${v.desc}</div></div><div class="right"><div class="cost" style="color:var(--green)">✓</div></div>`;}
+    else{const cost=vipCost(v,lvl);el.innerHTML=`<div class="ico">${v.ico}</div><div class="body"><div class="name">${v.name} <span class="owned">Lv ${lvl}/${v.max}</span></div><div class="desc">${v.desc}</div></div><div class="right"><div class="cost ${S.chips<cost?'no':''}" style="color:var(--neon2)">${cost} 💎</div></div>`;
+      el.onclick=()=>{if(S.chips>=cost){S.chips-=cost;S.vips[v.id]=lvl+1;beep(580,0.12);renderVip();updateStats();setupAuto();}};}
+    list.appendChild(el);}}
+function doPrestige(){const pending=Math.max(0,chipsFor(S.totalEarned)-S.chipsBanked);if(pending<1)return;
+  openModal("Cash Out?",`<p>Bank <b style="color:var(--neon2)">${fmtInt(pending)} VIP chips</b> for a permanent <b style="color:var(--gold)">+${pending*2}%</b> to all gains.</p><p style="color:var(--dim)">Resets coins, generators &amp; upgrades. Keeps chips, awards &amp; VIP perks.</p>`,
+    [{label:"Cash Out 💎",cls:"alt",fn:()=>{S.chips+=pending;S.chipsBanked+=pending;S.prestiges++;
+      const startC=START_COINS+(S.vips.v_start||0)*1000;const keep=(S.vips.v_keep||0)*0.05*cps();
+      S.coins=startC+keep;S.gens={};S.ups={};S.spins=0;S.runEarned=0;S.totalEarned=0;S.chipsBanked=S.chips;S.betIdx=0;S.auto=false;
+      GOALS.forEach(g=>g.done=false);endingShown=S.totalEarned>=1e18;buffs={};
+      closeModal();renderMachine();fullRender();pushNews(`Cashed out for ${pending} VIP chips!`);toast("💎","Prestige!","+"+pending+" VIP chips");checkAchievements();}},
+     {label:"Cancel",cls:"",fn:closeModal}]);}
+
+function renderStats(){const g=document.getElementById("statGrid");
+  const rows=[["Total earned",fmt(S.totalEarned)],["This run",fmt(S.runEarned)],["Coins/sec",fmt(cps())],["Best single win",fmt(S.bestWin)],
+    ["Total spins",fmtInt(S.spins)],["Manual / Auto",fmtInt(S.manualSpins)+" / "+fmtInt(S.autoSpins)],["7s Jackpots",fmtInt(S.jackpots)],["Mega Jackpots",fmtInt(S.megas)],
+    ["Golden spins",fmtInt(S.goldenClicked)],["Awards",achCount()+"/"+ACH.length],["VIP chips",fmtInt(S.chips)],["Prestiges",fmtInt(S.prestiges)],
+    ["Global multiplier","×"+globalMult().toFixed(2)],["Luck",Math.round(luckPct())+"%"],["Reels",reelCount()],["Playtime",fmtTime(S.playtime)]];
+  g.innerHTML=rows.map(r=>`<div class="stbox"><div class="k">${r[0]}</div><div class="v">${r[1]}</div></div>`).join("");}
+
+/* ============ goals / ending ============ */
+const GOALS=[
+  {amt:1e4,label:"First Big Win",done:false},{amt:1e6,label:"Millionaire",done:false},
+  {amt:1e8,label:"High Roller",done:false},{amt:1e10,label:"Casino Tycoon",done:false},
+  {amt:1e12,label:"Galactic Magnate",done:false},{amt:1e14,label:"Cosmic Mogul",done:false},
+  {amt:1e16,label:"Reality Owner",done:false},{amt:1e18,label:"THE INFINITE JACKPOT",done:false,ending:true},
+];
+let endingShown=false;
+function checkEnding(){for(const g of GOALS){if(!g.done&&S.totalEarned>=g.amt){g.done=true;
+  if(g.ending&&!endingShown){endingShown=true;showEnding();}else{pushNews("⭐ Milestone: "+g.label+"!");toast("⭐","Milestone!",g.label);}}}}
+function showEnding(){S.auto=false;renderAuto();bigConfetti();beep(880,0.6,"sawtooth");
+  openModal("♾️ YOU BEAT THE GAME ♾️",`<p>You spun a single quarter into the <b style="color:var(--gold)">Infinite Jackpot</b> — a casino empire worth ${fmt(S.totalEarned)} coins across the multiverse.</p>
+    <p><b>Spins:</b> ${fmtInt(S.spins)} · <b>VIP chips:</b> ${fmtInt(S.chips)} · <b>Awards:</b> ${achCount()}/${ACH.length} · <b>Best win:</b> ${fmt(S.bestWin)} · <b>Time:</b> ${fmtTime(S.playtime)}</p>
+    <p style="color:var(--dim)"><i>The neon never sleeps. Keep playing for infinite prestige, every award, and bragging rights.</i></p>`,
+    [{label:"Keep Playing ▸",cls:"",fn:closeModal},{label:"Cash Out 💎",cls:"alt",fn:()=>{closeModal();switchTab("vip");}}]);}
+
+/* ============ news ============ */
+const NEWS=["Local cat reportedly 'feeling lucky today.'","Economists baffled by your infinite money glitch.","Slot bot demands vacation days. Denied.",
+ "Rumor: the 🌌 Galaxy symbol grants a wish.","VIP lounge runs out of tiny pretzels.","You are 100% going to win it back.","Reels polished to a mirror shine.",
+ "Black hole bank reports negative interest. Literally.","Multiverse Mint prints money in 14 dimensions.","Click the ✨ when it appears!","The house always wins. You ARE the house now."];
+let newsIdx=0;
+function pushNews(t){const el=document.getElementById("news");el.textContent=t;el._t=Date.now();}
+setInterval(()=>{const el=document.getElementById("news");if(Date.now()-(el._t||0)>4500){el.textContent=NEWS[newsIdx%NEWS.length];newsIdx++;el._t=Date.now()-1500;}},5000);
+
+/* ============ toasts ============ */
+function toast(ico,title,sub){const w=document.getElementById("toasts");const t=document.createElement("div");t.className="toast";
+  t.innerHTML=`<div class="ti">${ico}</div><div class="tt"><b>${title}</b><small>${sub}</small></div>`;w.appendChild(t);
+  setTimeout(()=>{t.style.transition="opacity .4s,transform .4s";t.style.opacity="0";t.style.transform="translateX(120%)";setTimeout(()=>t.remove(),400);},3600);}
+
+/* ============ auto / tabs / settings ============ */
+function renderAuto(){document.getElementById("autoSwitch").classList.toggle("on",S.auto);document.getElementById("autoInfo").textContent=S.auto?`every ${(autoInterval()/1000).toFixed(2)}s`:"off";}
+document.getElementById("autoToggle").onclick=()=>{S.auto=!S.auto;renderAuto();setupAuto();};
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchTab(t.getAttribute("data-tab")));
+function switchTab(tab){curTab=tab;document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.getAttribute("data-tab")===tab));
+  ["gen","up","ach","vip","stats"].forEach(x=>document.getElementById("tab-"+x).style.display=x===tab?"block":"none");
+  if(tab==="vip")renderVip();if(tab==="up")renderUps();if(tab==="ach")renderAch();if(tab==="stats")renderStats();}
+document.querySelectorAll(".qtybtn").forEach(b=>b.onclick=()=>{document.querySelectorAll(".qtybtn").forEach(x=>x.classList.remove("active"));b.classList.add("active");const q=b.getAttribute("data-q");buyQty=q==="max"?"max":parseInt(q);renderGens();});
+
+function openModal(title,bodyHTML,btns){document.getElementById("mTitle").innerHTML=title;document.getElementById("mBody").innerHTML=bodyHTML;
+  const row=document.getElementById("mRow");row.innerHTML="";btns.forEach(b=>{const el=document.createElement("button");el.className="btn "+(b.cls||"");el.style.fontSize="15px";el.style.padding="11px 16px";el.textContent=b.label;el.onclick=b.fn;row.appendChild(el);});
+  document.getElementById("overlay").classList.add("show");}
+function closeModal(){document.getElementById("overlay").classList.remove("show");}
+document.getElementById("prestigeBtn").onclick=doPrestige;
+
+function openSettings(){const seg=(cur,opts)=>opts.map(o=>`<button data-v="${o.v}" class="${cur===o.v?'on':''}">${o.t}</button>`).join("");
+  openModal("⚙️ Settings",`
+   <div class="setline"><span>Sound effects</span><div class="seg" id="set-sound">${seg(SET.sound,[{v:true,t:"On"},{v:false,t:"Off"}])}</div></div>
+   <div class="setline"><span>Win particles</span><div class="seg" id="set-particles">${seg(SET.particles,[{v:true,t:"On"},{v:false,t:"Off"}])}</div></div>
+   <div class="setline"><span>Golden spins</span><div class="seg" id="set-golden">${seg(SET.golden,[{v:true,t:"On"},{v:false,t:"Off"}])}</div></div>
+   <div class="setline"><span>Number format</span><div class="seg" id="set-notation">${seg(SET.notation,[{v:"short",t:"1.23M"},{v:"sci",t:"1.23e6"}])}</div></div>
+   <p style="color:var(--dim);font-size:12px;margin-top:10px">Auto-saves every 8s to this browser. ${VERSION}</p>`,
+   [{label:"Done",cls:"alt",fn:()=>{saveSettings();closeModal();}}]);
+  const bind=(id,key,parse)=>{document.querySelectorAll("#"+id+" button").forEach(b=>b.onclick=()=>{SET[key]=parse(b.getAttribute("data-v"));document.querySelectorAll("#"+id+" button").forEach(x=>x.classList.remove("on"));b.classList.add("on");updateStats();});};
+  bind("set-sound","sound",v=>v==="true");bind("set-particles","particles",v=>v==="true");bind("set-golden","golden",v=>v==="true");bind("set-notation","notation",v=>v);}
+document.getElementById("gearBtn").onclick=openSettings;document.getElementById("settingsBtn").onclick=openSettings;
+
+/* ============ save / load ============ */
+const KEY="neonSpinSave_v2",SKEY="neonSpinSet_v2";
+function snapshot(){S.savedAt=Date.now();return{S,SET,goals:GOALS.map(g=>g.done),endingShown,buffs};}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(snapshot()));}catch(e){}}
+function saveSettings(){try{localStorage.setItem(SKEY,JSON.stringify(SET));}catch(e){}}
+function load(){try{const raw=localStorage.getItem(KEY);if(!raw)return false;const o=JSON.parse(raw);
+  Object.assign(S,o.S);if(o.SET)Object.assign(SET,o.SET);if(o.goals)o.goals.forEach((d,i)=>{if(GOALS[i])GOALS[i].done=d;});endingShown=!!o.endingShown;
+  // offline earnings
+  const away=(Date.now()-(o.S.savedAt||Date.now()))/1000;
+  if(away>30){const rate=cps();const earned=rate*Math.min(away,8*3600)*0.5;if(earned>0){pendingOffline={earned,away:Math.min(away,8*3600)};}}
+  return true;}catch(e){return false;}}
+let pendingOffline=null;
+setInterval(save,8000);window.addEventListener("beforeunload",save);
+document.getElementById("saveBtn").onclick=()=>{save();pushNews("Game saved ✓");toast("💾","Saved","Progress stored locally");};
+document.getElementById("wipeBtn").onclick=()=>openModal("Hard Reset?",`<p>This permanently deletes your save — coins, chips, awards, everything.</p>`,
+  [{label:"Delete Everything",cls:"",fn:()=>{localStorage.removeItem(KEY);location.reload();}},{label:"Cancel",cls:"alt",fn:closeModal}]);
+document.getElementById("exportBtn").onclick=()=>{const code=btoa(unescape(encodeURIComponent(JSON.stringify(snapshot()))));
+  openModal("Export Save",`<p>Copy this code to back up or move your game:</p><textarea readonly style="width:100%;height:90px;background:#0a0612;color:var(--neon2);border:1px solid var(--line);border-radius:8px;padding:8px">${code}</textarea>`,[{label:"Done",cls:"alt",fn:closeModal}]);};
+document.getElementById("importBtn").onclick=()=>openModal("Import Save",`<p>Paste a save code:</p><textarea id="impArea" style="width:100%;height:90px;background:#0a0612;color:var(--neon2);border:1px solid var(--line);border-radius:8px;padding:8px"></textarea>`,
+  [{label:"Load",cls:"alt",fn:()=>{try{const o=JSON.parse(decodeURIComponent(escape(atob(document.getElementById("impArea").value.trim()))));Object.assign(S,o.S);if(o.SET)Object.assign(SET,o.SET);if(o.goals)o.goals.forEach((d,i)=>{if(GOALS[i])GOALS[i].done=d;});endingShown=!!o.endingShown;closeModal();renderMachine();fullRender();pushNews("Save imported ✓");}catch(e){alert("Invalid code.");}}},{label:"Cancel",cls:"",fn:closeModal}]);
+
+/* ============ input ============ */
+document.getElementById("spinBtn").onclick=()=>spin(true);
+window.addEventListener("keydown",e=>{if(e.target.tagName==="TEXTAREA")return;
+  if(e.code==="Space"){e.preventDefault();spin(true);}
+  else if(e.key.toLowerCase()==="a"){S.auto=!S.auto;renderAuto();setupAuto();}
+  else if(e.key.toLowerCase()==="m"){maxAffordableBet();}
+  else if(e.key>="1"&&e.key<="6"){const i=+e.key-1;if(i<BETS.length){S.betIdx=i;renderBets();updateStats();}}});
+
+/* ============ boot ============ */
+function updateUI(){renderGens();if(curTab==="up")renderUps();if(curTab==="vip")renderVip();if(curTab==="stats")renderStats();updateStats();}
+function fullRender(){renderBets();renderGens();renderUps();renderPaytable();renderVip();renderAch();renderAuto();renderStats();updateStats();setupAuto();renderBuffs();}
+load();renderMachine();fullRender();pushNews(NEWS[0]);
+if(pendingOffline){const o=pendingOffline;S.coins+=o.earned;S.totalEarned+=o.earned;S.runEarned+=o.earned;
+  setTimeout(()=>openModal("👋 Welcome Back!",`<p>While you were away for <b style="color:var(--gold)">${fmtTime(o.away)}</b>, your casinos earned <b style="color:var(--green)">${fmt(o.earned)} coins</b>.</p><p style="color:var(--dim)">(Offline earnings pay 50% of your full rate, capped at 8 hours.)</p>`,[{label:"Collect 💰",cls:"alt",fn:()=>{spawnFloat(o.earned);closeModal();}}]),500);}
+</script>
+</body>
+</html>
