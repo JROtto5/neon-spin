@@ -24,13 +24,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             line = ("{ts} | {t:>5}s | {reason:<6} | spins {spins:<6} "
                     "| coins {coinsF:<8} | earned {earnedF:<8} | cps {cpsF:<8}/s "
                     "| x{mult:<10} | luck {luck}% | reels {reels} | chips {chips} "
-                    "| prest {prestiges} | best {bestWin}").format(
+                    "| free {free:>4} | prest {prestiges} | best {bestWin}").format(
                 ts=ts, t=d.get("t", "?"), reason=d.get("reason", "?"),
                 spins=d.get("spins", "?"), coinsF=d.get("coinsF", "?"),
                 earnedF=d.get("earnedF", "?"), cpsF=d.get("cpsF", "?"),
                 mult=d.get("mult", "?"), luck=d.get("luck", "?"),
                 reels=d.get("reels", "?"), chips=d.get("chips", "?"),
-                prestiges=d.get("prestiges", "?"), bestWin=d.get("bestWin", "?"))
+                prestiges=d.get("prestiges", "?"), free=d.get("free", "?"), bestWin=d.get("bestWin", "?"))
             with open(LOG, "a") as f:
                 f.write(line + "\n")
             self.send_response(204)

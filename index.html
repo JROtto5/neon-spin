@@ -436,7 +436,7 @@ const SYMBOLS=[
   {ch:"7️⃣",name:"Lucky 7",weight:3, three:300, two:0,jackpot:true},
   {ch:"🐃",name:"Buffalo",weight:1, three:2500,two:0,mega:true},
   {ch:"🃏",name:"Wild",   weight:5, three:0,   two:0,wild:true},
-  {ch:"🎁",name:"Scatter",weight:6, three:0,   two:0,scatter:true},
+  {ch:"🎁",name:"Scatter",weight:4, three:0,   two:0,scatter:true},
 ];
 // bet ladder is GATED by the Table Limit slot upgrade (not by wealth) — this is what prevents runaway
 let BETS=[10,40,160,640,2560,10240];
@@ -631,10 +631,10 @@ function cps(){const bet=currentBet();const gross=bet*BASE_RTP*payMult()*sizeFac
 function weightedSymbols(){
   const l=luckPct()/100;
   return SYMBOLS.map(s=>{let w=s.weight;const rb=(s.three||0)/3;w*=1+l*Math.log2(rb+1)*0.6;
-    if(s.jackpot)w*=jackpotBoost()*(1+slotAdd('jack'));
-    if(s.mega)w*=megaBoost()*(1+slotAdd('jack'));
-    if(s.wild)w*=(1+slotAdd('wild')+(S.vips.v_wild||0)*0.5);
-    if(s.scatter)w*=(1+slotAdd('bonus'));
+    if(s.jackpot)w*=jackpotBoost()*(1+Math.min(2,slotAdd('jack')));
+    if(s.mega)w*=megaBoost()*(1+Math.min(2,slotAdd('jack')));
+    if(s.wild)w*=(1+Math.min(1.6,slotAdd('wild')+(S.vips.v_wild||0)*0.5));
+    if(s.scatter)w*=(1+Math.min(0.4,slotAdd('bonus')));
     return{s,w};});
 }
 function pickSymbol(pool,tw){let r=Math.random()*tw;for(const e of pool){r-=e.w;if(r<=0)return e.s;}return pool[pool.length-1].s;}
@@ -708,7 +708,7 @@ function evaluate(grid){
   // (coins ∝ t^2.5), so it can NEVER runaway exponentially regardless of bet/upgrade combos.
   // Upgrades/bets just let you reliably reach this ceiling; they can't blow past it.
   const cap=(120*(1+(S.vips.v_govern||0)*0.12+((S.asc&&S.asc.asc_govern)||0)*0.30))*Math.pow(Math.max(1,S.coins),0.6)+1e4;
-  let scat=0;grid.forEach(col=>col.forEach(s=>{if(s&&s.scatter)scat++;}));
+  let scat=0;grid.forEach(col=>{if(col.some(s=>s&&s.scatter))scat++;});
   // sunset multiplier wilds — active during free spins
   let wildMult=1;
   grid.forEach(col=>col.forEach(s=>{if(s&&s.wild&&S.freeSpins>0)wildMult*=(Math.random()<0.5?2:3);}));
@@ -789,10 +789,10 @@ async function spin(manual){
 /* ---- bonus / free spins ---- */
 let freeTimer=null;
 function triggerFreeSpins(scat){
-  const award=8+Math.max(0,(scat||3)-3)*4+(S.vips.v_bonus||0)*2;
+  const award=(!freeTimer?10:4)+Math.max(0,(scat||3)-3)*2+(S.vips.v_bonus||0)*2;
   const fresh=!freeTimer;
   if(fresh){S.freeMult=3;S.bonusBet=BETS[S.betIdx];}else S.freeMult=Math.min((S.freeMult||3)+2,25); // multiplier climbs on retrigger!
-  S.freeSpins=(S.freeSpins||0)+award;S.bonusTriggers=(S.bonusTriggers||0)+1;
+  S.freeSpins=Math.min(100,(S.freeSpins||0)+award);S.bonusTriggers=(S.bonusTriggers||0)+1;
   toast("🎁",fresh?"FREE SPINS!":"RETRIGGER!",award+" spins · all wins ×"+S.freeMult);pushNews("🎁 BONUS! "+award+" free spins ×"+S.freeMult+"!");
   beep(720,0.3,"square");sfx("jackpot",0.7);bigConfetti();jackpotFlash();screenShake();renderBonusBanner();
   if(fresh)freeTimer=setTimeout(pumpFreeSpins,650);
@@ -1253,7 +1253,7 @@ function logProgress(reason){try{
   const d={t:Math.round(S.playtime),reason:reason||"tick",spins:S.spins,manual:S.manualSpins,auto:S.autoSpins,
     coins:Math.round(S.coins),coinsF:fmt(S.coins),earned:S.totalEarned,earnedF:fmt(S.totalEarned),
     cps:Math.round(cps()),cpsF:fmt(cps()),chips:S.chips,mult:+globalMult().toFixed(2),luck:Math.round(luckPct()),
-    reels:reelCount(),prestiges:S.prestiges,bestWin:fmt(S.bestWin),bet:currentBet(),gens:Object.keys(S.gens).length};
+    reels:reelCount(),free:S.freeSpins||0,prestiges:S.prestiges,bestWin:fmt(S.bestWin),bet:currentBet(),gens:Object.keys(S.gens).length};
   const body=JSON.stringify(d);
   if(navigator.sendBeacon)navigator.sendBeacon("/log",body);
   else fetch("/log",{method:"POST",body,keepalive:true}).catch(()=>{});
@@ -1269,6 +1269,7 @@ function updateUI(){renderGens();if(curTab==="up")renderUps();if(curTab==="vip")
 function fullRender(){renderBets();renderGens();renderUps();renderPaytable();renderVip();renderAch();renderAuto();renderStats();updateStats();setupAuto();renderBuffs();}
 load();renderMachine();fullRender();renderBonusBanner();pushNews(NEWS[0]);
 if(new URLSearchParams(location.search).get("auto")){S.auto=true;renderAuto();setupAuto();} // dev: ?auto=1 auto-spins
+{const _fs=parseInt(new URLSearchParams(location.search).get("fs"))||0;if(_fs){S.freeSpins=_fs;S.freeMult=3;S.bonusBet=BETS[S.betIdx];if(!freeTimer)freeTimer=setTimeout(pumpFreeSpins,600);}} // dev: ?fs=N seed free spins
 if(S.freeSpins>0){S.freeMult=S.freeMult||3;if(!freeTimer)freeTimer=setTimeout(pumpFreeSpins,900);}
 if(pendingOffline){const o=pendingOffline;S.coins+=o.earned;S.totalEarned+=o.earned;S.runEarned+=o.earned;
   setTimeout(()=>openModal("👋 Welcome Back!",`<p>While you were away for <b style="color:var(--gold)">${fmtTime(o.away)}</b>, your casinos earned <b style="color:var(--green)">${fmt(o.earned)} coins</b>.</p><p style="color:var(--dim)">(Offline earnings pay 50% of your full rate, capped at 8 hours.)</p>`,[{label:"Collect 💰",cls:"alt",fn:()=>{spawnFloat(o.earned);closeModal();}}]),500);}
