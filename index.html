@@ -540,13 +540,16 @@ const UP=[
 
 /* ============ VIP / prestige perks ============ */
 const VIPS=[
-  {id:"v_start",ico:"🎁",name:"Welcome Package",cost:1,max:5,desc:"Start runs with more coins"},
-  {id:"v_pay",  ico:"💵",name:"VIP Payouts",   cost:2,max:8,desc:"+25% manual payouts / lvl"},
-  {id:"v_gen",  ico:"🏭",name:"VIP Production", cost:3,max:8,desc:"+20% generator income / lvl"},
-  {id:"v_luck", ico:"🔮",name:"VIP Fortune",    cost:4,max:6,desc:"+5% Luck / lvl"},
-  {id:"v_auto", ico:"♾️",name:"VIP Automation",  cost:5,max:5,desc:"Auto-spin 15% faster / lvl"},
-  {id:"v_gold", ico:"✨",name:"VIP Magnetism",  cost:4,max:5,desc:"Golden spins +20% more often / lvl"},
-  {id:"v_keep", ico:"🏦",name:"Head Start",     cost:8,max:4,desc:"Keep 5% of cps as starting coins / lvl"},
+  {id:"v_pay",  ico:"💵",name:"VIP Payouts",        cost:2, max:10,desc:"+25% all wins / lvl"},
+  {id:"v_gen",  ico:"🎰",name:"VIP Reels",          cost:3, max:10,desc:"+30% all wins / lvl"},
+  {id:"v_luck", ico:"🔮",name:"VIP Fortune",        cost:4, max:8, desc:"+5% Luck / lvl"},
+  {id:"v_auto", ico:"♾️",name:"VIP Automation",      cost:5, max:6, desc:"Auto-spin 15% faster / lvl"},
+  {id:"v_gold", ico:"✨",name:"VIP Magnetism",      cost:4, max:6, desc:"Golden spins 20% more often / lvl"},
+  {id:"v_wild", ico:"🃏",name:"Loaded Reels",       cost:5, max:6, desc:"Wild 🃏 appears more often / lvl"},
+  {id:"v_prog", ico:"💰",name:"Progressive Boost",  cost:5, max:6, desc:"Progressive jackpot grows +30% faster / lvl"},
+  {id:"v_bonus",ico:"🎁",name:"VIP Bonus Rounds",   cost:6, max:5, desc:"Free-spin bonuses give +2 spins / lvl"},
+  {id:"v_govern",ico:"🎩",name:"High Roller License",cost:10,max:8, desc:"+12% win ceiling / lvl — climb faster"},
+  {id:"v_start",ico:"🏦",name:"Head Start",         cost:8, max:6, desc:"Start each run with far more coins"},
 ];
 function vipCost(v,l){return v.cost*(l+1);}
 // far rarer chips with a gentle exponent — prevents the +2%/chip runaway (was earned^0.42 → 100Ms of chips)
@@ -611,7 +614,7 @@ function luckPct(){let l=0;for(const u of UP)if(S.ups[u.id]&&u.eff.luck)l+=u.eff
 function chipMult(){return 1+S.chips*0.02;}
 function starMult(){return (1+(S.stars||0)*0.5)*(1+((S.asc&&S.asc.asc_gain)||0)*0.5);} // Ascension Star Shards
 // all win multipliers (slot upgrades + legacy upgrade effects + vip/chip/ach/star/buffs)
-function payMult(){let m=1;for(const u of UP)if(S.ups[u.id]&&(u.eff.payMult||u.eff.gen))m*=(u.eff.payMult||u.eff.mult);m*=1+(S.vips.v_pay||0)*0.25;m*=chipMult();m*=achMult();m*=buffMult();m*=starMult();m*=slotWin();return m;}
+function payMult(){let m=1;for(const u of UP)if(S.ups[u.id]&&(u.eff.payMult||u.eff.gen))m*=(u.eff.payMult||u.eff.mult);m*=1+(S.vips.v_pay||0)*0.25;m*=1+(S.vips.v_gen||0)*0.30;m*=1+((S.asc&&S.asc.asc_win)||0)*1.0;m*=chipMult();m*=achMult();m*=buffMult();m*=starMult();m*=slotWin();return m;}
 function reelCount(){let r=3;for(const u of UP)if(S.ups[u.id]&&u.eff.reels)r=Math.max(r,u.eff.reels);return r;}
 function rowCount(){let r=Math.max(1,devRows);for(const u of UP)if(S.ups[u.id]&&u.eff.rows)r=Math.max(r,u.eff.rows);return r;}
 function autoInterval(){let b=1200;for(const u of UP)if(S.ups[u.id]&&u.eff.autoSpeed)b*=u.eff.autoSpeed;b*=Math.pow(0.85,S.vips.v_auto||0);b*=slotEff('speed');b*=Math.pow(0.9,(S.asc&&S.asc.asc_auto)||0);return Math.max(150,b);}
@@ -630,7 +633,7 @@ function weightedSymbols(){
   return SYMBOLS.map(s=>{let w=s.weight;const rb=(s.three||0)/3;w*=1+l*Math.log2(rb+1)*0.6;
     if(s.jackpot)w*=jackpotBoost()*(1+slotAdd('jack'));
     if(s.mega)w*=megaBoost()*(1+slotAdd('jack'));
-    if(s.wild)w*=(1+slotAdd('wild'));
+    if(s.wild)w*=(1+slotAdd('wild')+(S.vips.v_wild||0)*0.5);
     if(s.scatter)w*=(1+slotAdd('bonus'));
     return{s,w};});
 }
@@ -704,7 +707,7 @@ function evaluate(grid){
   // HARD GOVERNOR: a single spin pays at most ~coins^0.6. This makes growth provably POLYNOMIAL
   // (coins ∝ t^2.5), so it can NEVER runaway exponentially regardless of bet/upgrade combos.
   // Upgrades/bets just let you reliably reach this ceiling; they can't blow past it.
-  const cap=120*Math.pow(Math.max(1,S.coins),0.6)+1e4;
+  const cap=(120*(1+(S.vips.v_govern||0)*0.12+((S.asc&&S.asc.asc_govern)||0)*0.30))*Math.pow(Math.max(1,S.coins),0.6)+1e4;
   let scat=0;grid.forEach(col=>col.forEach(s=>{if(s&&s.scatter)scat++;}));
   // sunset multiplier wilds — active during free spins
   let wildMult=1;
@@ -764,14 +767,14 @@ async function spin(manual){
     else{beep(440,0.08);sfx("coin",0.4);}
   }else if(manual&&!free){flashResult("— "+res.label+" —","");}
   // progressive jackpot: accrues each spin, rare hit (bounded so it can't runaway)
-  S.progressive=(S.progressive||0)+bet*0.4;
+  S.progressive=(S.progressive||0)+bet*0.4*(1+(S.vips.v_prog||0)*0.3);
   const potCap=cps()*1800+S.coins*0.5+1e4;if(S.progressive>potCap)S.progressive=potCap;
   if(!free&&Math.random()<(1/3500)*(1+luckPct()/150)){
     const won=S.progressive;S.coins+=won;S.totalEarned+=won;S.runEarned+=won;S.progressive=bet*5;S.progHits=(S.progHits||0)+1;
     showWin({kind:"jackpot",payout:won,label:"PROGRESSIVE"});spawnFloat(won);toast("🎰","PROGRESSIVE JACKPOT!","+"+fmt(won)+" coins!");
     sfx("mega",0.8);beep(700,0.4,"square");bigConfetti();jackpotFlash();screenShake();fireworks(24);pushNews("🎰 PROGRESSIVE JACKPOT hit!");}
   // bonus wheel charge
-  S.wheelCharge=(S.wheelCharge||0)+(free?0.6:1.4);
+  S.wheelCharge=(S.wheelCharge||0)+(free?0.6:1.4)*(1+((S.asc&&S.asc.asc_wheel)||0)*0.25);
   if(S.wheelCharge>=100){S.wheelCharge-=100;S.wheelTokens=(S.wheelTokens||0)+1;toast("🎡","Wheel charged!","Free bonus wheel ready");sfx("win",0.4);}
   // lucky streak consume
   if(buffs.lucky){buffs.lucky.left--;if(buffs.lucky.left<=0)delete buffs.lucky;}
@@ -786,7 +789,7 @@ async function spin(manual){
 /* ---- bonus / free spins ---- */
 let freeTimer=null;
 function triggerFreeSpins(scat){
-  const award=8+Math.max(0,(scat||3)-3)*4;
+  const award=8+Math.max(0,(scat||3)-3)*4+(S.vips.v_bonus||0)*2;
   const fresh=!freeTimer;
   if(fresh){S.freeMult=3;S.bonusBet=BETS[S.betIdx];}else S.freeMult=Math.min((S.freeMult||3)+2,25); // multiplier climbs on retrigger!
   S.freeSpins=(S.freeSpins||0)+award;S.bonusTriggers=(S.bonusTriggers||0)+1;
@@ -804,7 +807,7 @@ function buyBonus(){
   if(S.coins<cost){flashResult("Need "+fmt(cost)+" coins to buy the bonus!","");beep(160,0.08);sfx("lose",0.3);return;}
   S.coins-=cost;S.bonusBuys=(S.bonusBuys||0)+1;S.bonusBet=BETS[S.betIdx]; // lock bet at purchase
   toast("💰","BONUS BOUGHT!","10 free spins · all wins ×3");sfx("mega",0.7);bigConfetti();
-  S.freeSpins=(S.freeSpins||0)+10;S.freeMult=3;renderBonusBanner();updateStats();
+  S.freeSpins=(S.freeSpins||0)+10+(S.vips.v_bonus||0)*2;S.freeMult=3;renderBonusBanner();updateStats();
   if(!freeTimer)freeTimer=setTimeout(pumpFreeSpins,500);
 }
 function renderBonusBanner(){
@@ -959,7 +962,7 @@ function setupAuto(){if(autoTimer)clearTimeout(autoTimer);if(!S.auto)return;
 
 /* ============ golden spin ============ */
 let goldenTimer=18+Math.random()*22;
-function goldenInterval(){return (70+Math.random()*70)/(1+(S.vips.v_gold||0)*0.2);}
+function goldenInterval(){return (70+Math.random()*70)/((1+(S.vips.v_gold||0)*0.2)*(1+((S.asc&&S.asc.asc_wheel)||0)*0.25));}
 function maybeGolden(dt){if(!SET.golden)return;const el=document.getElementById("golden");if(el.style.display==="block")return;
   goldenTimer-=dt;if(goldenTimer<=0){spawnGolden();goldenTimer=goldenInterval();}}
 function spawnGolden(){const el=document.getElementById("golden");
@@ -1109,7 +1112,7 @@ function renderVip(){const pending=Math.max(0,chipsFor(S.totalEarned)-S.chipsBan
 function doPrestige(){const pending=Math.max(0,chipsFor(S.totalEarned)-S.chipsBanked);if(pending<1)return;
   openModal("Cash Out?",`<p>Bank <b style="color:var(--neon2)">${fmtInt(pending)} VIP chips</b> for a permanent <b style="color:var(--gold)">+${pending*2}%</b> to all gains.</p><p style="color:var(--dim)">Resets coins, generators &amp; upgrades. Keeps chips, awards &amp; VIP perks.</p>`,
     [{label:"Cash Out 💎",cls:"alt",fn:()=>{S.chips+=pending;S.chipsBanked+=pending;S.totalChipsEarned=(S.totalChipsEarned||0)+pending;S.prestiges++;
-      const startC=START_COINS+(S.vips.v_start||0)*1000;const keep=(S.vips.v_keep||0)*0.05*cps();
+      const startC=START_COINS+((S.vips.v_start||0)?Math.pow(10,2+(S.vips.v_start)):0);const keep=0;
       S.coins=startC+keep;S.gens={};S.ups={};S.spins=0;S.runEarned=0;S.totalEarned=0;S.chipsBanked=S.chips;S.betIdx=0;S.auto=false;
       GOALS.forEach(g=>g.done=false);endingShown=S.totalEarned>=1e18;buffs={};
       closeModal();renderMachine();fullRender();pushNews(`Cashed out for ${pending} VIP chips!`);toast("💎","Prestige!","+"+pending+" VIP chips");checkAchievements();}},
@@ -1117,11 +1120,14 @@ function doPrestige(){const pending=Math.max(0,chipsFor(S.totalEarned)-S.chipsBa
 
 /* ============ ASCENSION (2nd prestige layer — Star Shards) ============ */
 const ASCS=[
-  {id:"asc_gain", ico:"✦",name:"Cosmic Fortune", cost:1,max:10,desc:"+50% to ALL gains per level"},
-  {id:"asc_start",ico:"💼",name:"Cosmic Bankroll",cost:2,max:6, desc:"Start each run with far more coins"},
-  {id:"asc_luck", ico:"🌟",name:"Star Luck",      cost:2,max:6, desc:"+10% permanent Luck per level"},
-  {id:"asc_auto", ico:"⚡",name:"Star Speed",      cost:3,max:5, desc:"Auto-spin 10% faster per level"},
-  {id:"asc_keep", ico:"🏦",name:"Star Legacy",     cost:4,max:5, desc:"Keep 1 level of every slot upgrade per level on prestige"},
+  {id:"asc_gain", ico:"✦",name:"Cosmic Fortune", cost:1,max:15,desc:"+50% to ALL gains per level"},
+  {id:"asc_win",  ico:"💥",name:"Star Payouts",   cost:2,max:12,desc:"+100% all wins per level"},
+  {id:"asc_govern",ico:"🌠",name:"Star Ceiling",  cost:3,max:10,desc:"+30% win ceiling per level — climb much faster"},
+  {id:"asc_start",ico:"💼",name:"Cosmic Bankroll",cost:2,max:8, desc:"Start each run with far more coins"},
+  {id:"asc_luck", ico:"🌟",name:"Star Luck",      cost:2,max:8, desc:"+10% permanent Luck per level"},
+  {id:"asc_auto", ico:"⚡",name:"Star Speed",      cost:3,max:6, desc:"Auto-spin 10% faster per level"},
+  {id:"asc_wheel",ico:"🎡",name:"Star Fortune",   cost:3,max:5, desc:"Golden spins &amp; bonus wheel charge 25% faster / lvl"},
+  {id:"asc_keep", ico:"🏦",name:"Star Legacy",     cost:4,max:6, desc:"Keep 1 level of every slot upgrade per level on prestige"},
 ];
 function ascCost(a,l){return a.cost*(l+1);}
 function starsFor(tc){return (tc||0)<25?0:Math.floor(Math.pow((tc||0)/25,0.5));}
