@@ -410,7 +410,7 @@
 
 <script>
 "use strict";
-const VERSION="v2.3";
+const VERSION="v3.4";
 document.getElementById("ver").textContent=VERSION;
 
 /* ============ number formatting ============ */
@@ -498,35 +498,35 @@ function maxBuy(g,o,coins){let n=0,c=0;while(true){const x=genCost(g,o+n);if(c+x
 const UP=[
   {id:"u_pay1",ico:"💰",name:"Polished Reels",cost:500,desc:"Spin payouts ×2",req:s=>s.spins>=5,eff:{payMult:2}},
   {id:"u_luck1",ico:"🍀",name:"Four-Leaf Clover",cost:2500,desc:"+8% Luck",req:s=>s.spins>=15,eff:{luck:8}},
-  {id:"u_cat",ico:"🐟",name:"Premium Catnip",cost:4000,desc:"Lucky Cats ×3",req:s=>(s.gens.cat||0)>=10,eff:{gen:"cat",mult:3}},
+  {id:"u_cat",ico:"🐟",name:"Premium Catnip",cost:4000,desc:"×3 all wins",req:s=>(s.gens.cat||0)>=10,eff:{gen:"cat",mult:3}},
   {id:"u_auto1",ico:"⚡",name:"Hair Trigger",cost:9000,desc:"Auto-spin 35% faster",req:s=>s.spins>=40,eff:{autoSpeed:0.65}},
   {id:"u_pay2",ico:"💰",name:"Gold Plating",cost:30000,desc:"Spin payouts ×2",req:s=>s.spins>=80,eff:{payMult:2}},
-  {id:"u_bot",ico:"🔧",name:"Overclocked Bots",cost:60000,desc:"Slot Bots ×3",req:s=>(s.gens.bot||0)>=10,eff:{gen:"bot",mult:3}},
+  {id:"u_bot",ico:"🔧",name:"Overclocked Bots",cost:60000,desc:"×3 all wins",req:s=>(s.gens.bot||0)>=10,eff:{gen:"bot",mult:3}},
   {id:"u_luck2",ico:"🍀",name:"Rabbit's Foot",cost:120000,desc:"+10% Luck",req:s=>(s.gens.lounge||0)>=5,eff:{luck:10}},
   {id:"u_reel4",ico:"🎟️",name:"Fourth Reel",cost:250000,desc:"Add a 4th reel — bigger lines!",req:s=>s.spins>=120,eff:{reels:4}},
-  {id:"u_all1",ico:"📈",name:"Loyalty Program",cost:500000,desc:"ALL generators ×1.4",req:s=>s.spins>=160,eff:{gen:"all",mult:1.4}},
-  {id:"u_lounge",ico:"🥂",name:"Bottomless Bar",cost:900000,desc:"VIP Lounges ×3",req:s=>(s.gens.lounge||0)>=25,eff:{gen:"lounge",mult:3}},
+  {id:"u_all1",ico:"📈",name:"Loyalty Program",cost:500000,desc:"×1.4 all wins",req:s=>s.spins>=160,eff:{gen:"all",mult:1.4}},
+  {id:"u_lounge",ico:"🥂",name:"Bottomless Bar",cost:900000,desc:"×3 all wins",req:s=>(s.gens.lounge||0)>=25,eff:{gen:"lounge",mult:3}},
   {id:"u_jack",ico:"7️⃣",name:"Rigged in Your Favor",cost:1.2e6,desc:"Lucky 7s 2× as common",req:s=>(s.gens.floor||0)>=10,eff:{jackpot:2}},
   {id:"u_auto2",ico:"⚡",name:"Quantum Lever",cost:4e6,desc:"Auto-spin 40% faster",req:s=>!!s.ups.u_auto1,eff:{autoSpeed:0.6}},
-  {id:"u_floor",ico:"🎲",name:"Loose Machines",cost:7e6,desc:"Casino Floors ×3",req:s=>(s.gens.floor||0)>=25,eff:{gen:"floor",mult:3}},
+  {id:"u_floor",ico:"🎲",name:"Loose Machines",cost:7e6,desc:"×3 all wins",req:s=>(s.gens.floor||0)>=25,eff:{gen:"floor",mult:3}},
   {id:"u_pay3",ico:"💎",name:"Diamond Reels",cost:1.5e7,desc:"Spin payouts ×3",req:s=>s.spins>=400,eff:{payMult:3}},
   {id:"u_reel5",ico:"🎟️",name:"Fifth Reel",cost:4e7,desc:"Add a 5th reel — massive lines!",req:s=>!!s.ups.u_reel4&&s.spins>=500,eff:{reels:5}},
-  {id:"u_all2",ico:"📈",name:"Monopoly",cost:8e7,desc:"ALL generators ×1.6",req:s=>(s.gens.online||0)>=10,eff:{gen:"all",mult:1.6}},
-  {id:"u_online",ico:"📡",name:"Viral Marketing",cost:3e8,desc:"Online Casinos ×3",req:s=>(s.gens.online||0)>=25,eff:{gen:"online",mult:3}},
+  {id:"u_all2",ico:"📈",name:"Monopoly",cost:8e7,desc:"×1.6 all wins",req:s=>(s.gens.online||0)>=10,eff:{gen:"all",mult:1.6}},
+  {id:"u_online",ico:"📡",name:"Viral Marketing",cost:3e8,desc:"×3 all wins",req:s=>(s.gens.online||0)>=25,eff:{gen:"online",mult:3}},
   {id:"u_luck3",ico:"🌟",name:"Pact with Fortune",cost:5e8,desc:"+12% Luck",req:s=>(s.gens.vault||0)>=5,eff:{luck:12}},
-  {id:"u_vault",ico:"💵",name:"Compound Interest",cost:2e9,desc:"The Vaults ×3",req:s=>(s.gens.vault||0)>=25,eff:{gen:"vault",mult:3}},
-  {id:"u_all3",ico:"🚀",name:"Hostile Takeover",cost:1e10,desc:"ALL generators ×1.8",req:s=>(s.gens.city||0)>=10,eff:{gen:"all",mult:1.8}},
-  {id:"u_city",ico:"🏙️",name:"Urban Sprawl",cost:6e10,desc:"Casino Cities ×3",req:s=>(s.gens.city||0)>=25,eff:{gen:"city",mult:3}},
+  {id:"u_vault",ico:"💵",name:"Compound Interest",cost:2e9,desc:"×3 all wins",req:s=>(s.gens.vault||0)>=25,eff:{gen:"vault",mult:3}},
+  {id:"u_all3",ico:"🚀",name:"Hostile Takeover",cost:1e10,desc:"×1.8 all wins",req:s=>(s.gens.city||0)>=10,eff:{gen:"all",mult:1.8}},
+  {id:"u_city",ico:"🏙️",name:"Urban Sprawl",cost:6e10,desc:"×3 all wins",req:s=>(s.gens.city||0)>=25,eff:{gen:"city",mult:3}},
   {id:"u_luck4",ico:"🔆",name:"Blessed Reels",cost:3e11,desc:"+15% Luck",req:s=>(s.gens.orbit||0)>=5,eff:{luck:15}},
-  {id:"u_mega",ico:"🌌",name:"Cosmic Alignment",cost:5e11,desc:"Galaxy symbols 3× as common",req:s=>(s.gens.orbit||0)>=10,eff:{megaUp:3}},
-  {id:"u_orbit",ico:"🚀",name:"Zero-G Spins",cost:2e12,desc:"Orbital Casinos ×3",req:s=>(s.gens.orbit||0)>=25,eff:{gen:"orbit",mult:3}},
-  {id:"u_all4",ico:"♾️",name:"Universal Franchise",cost:2e13,desc:"ALL generators ×2",req:s=>(s.gens.galaxy||0)>=10,eff:{gen:"all",mult:2}},
+  {id:"u_mega",ico:"🌌",name:"Cosmic Alignment",cost:5e11,desc:"Buffalo 🐃 symbols 3× as common",req:s=>(s.gens.orbit||0)>=10,eff:{megaUp:3}},
+  {id:"u_orbit",ico:"🚀",name:"Zero-G Spins",cost:2e12,desc:"×3 all wins",req:s=>(s.gens.orbit||0)>=25,eff:{gen:"orbit",mult:3}},
+  {id:"u_all4",ico:"♾️",name:"Universal Franchise",cost:2e13,desc:"×2 all wins",req:s=>(s.gens.galaxy||0)>=10,eff:{gen:"all",mult:2}},
   {id:"u_pay4",ico:"👑",name:"Royal Flush Reels",cost:1e14,desc:"Spin payouts ×4",req:s=>s.spins>=1200,eff:{payMult:4}},
-  {id:"u_all5",ico:"🌠",name:"Cosmic Empire",cost:5e15,desc:"ALL generators ×2.2",req:s=>(s.gens.nebula||0)>=10,eff:{gen:"all",mult:2.2}},
+  {id:"u_all5",ico:"🌠",name:"Cosmic Empire",cost:5e15,desc:"×2.2 all wins",req:s=>(s.gens.nebula||0)>=10,eff:{gen:"all",mult:2.2}},
   {id:"u_luck5",ico:"👁️",name:"Eye of Fortune",cost:1e17,desc:"+25% Luck",req:s=>(s.gens.hole||0)>=10,eff:{luck:25}},
-  {id:"u_all6",ico:"💫",name:"Heat Death Economy",cost:1e18,desc:"ALL generators ×2.5",req:s=>(s.gens.multi||0)>=10,eff:{gen:"all",mult:2.5}},
-  {id:"u_all7",ico:"🌞",name:"Omniversal Cartel",cost:5e20,desc:"ALL generators ×2.5",req:s=>(s.gens.cartel||0)>=10,eff:{gen:"all",mult:2.5}},
-  {id:"u_all8",ico:"🕛",name:"End of Time",cost:1e23,desc:"ALL generators ×3",req:s=>(s.gens.singul||0)>=10,eff:{gen:"all",mult:3}},
+  {id:"u_all6",ico:"💫",name:"Heat Death Economy",cost:1e18,desc:"×2.5 all wins",req:s=>(s.gens.multi||0)>=10,eff:{gen:"all",mult:2.5}},
+  {id:"u_all7",ico:"🌞",name:"Omniversal Cartel",cost:5e20,desc:"×2.5 all wins",req:s=>(s.gens.cartel||0)>=10,eff:{gen:"all",mult:2.5}},
+  {id:"u_all8",ico:"🕛",name:"End of Time",cost:1e23,desc:"×3 all wins",req:s=>(s.gens.singul||0)>=10,eff:{gen:"all",mult:3}},
   {id:"u_reel6",ico:"🎟️",name:"Sixth Reel",cost:1e22,desc:"Add a 6th reel — colossal lines!",req:s=>!!s.ups.u_reel5&&s.spins>=2500,eff:{reels:6}},
   {id:"u_grid3",ico:"🎛️",name:"3-Row Grid",cost:6e6,desc:"Reels become a grid — pays every row + diagonals!",req:s=>s.spins>=180,eff:{rows:3}},
   {id:"u_grid4",ico:"🧮",name:"4-Row Grid",cost:2e9,desc:"4 rows of paylines",req:s=>!!s.ups.u_grid3&&s.spins>=600,eff:{rows:4}},
@@ -568,11 +568,11 @@ const ACH=[
   {id:"a_c1qa",ico:"🏆",name:"Beyond Money",desc:"1Qa coins earned",c:s=>s.totalEarned>=1e15},
   {id:"a_c1qi",ico:"🌟",name:"Quintillionaire",desc:"1Qi coins earned",c:s=>s.totalEarned>=1e18},
   {id:"a_c1sx",ico:"💫",name:"Multiversal Rich",desc:"1Sx coins earned",c:s=>s.totalEarned>=1e21},
-  {id:"a_cat",ico:"🐱",name:"Cat Lady",desc:"50 Lucky Cats",c:s=>(s.gens.cat||0)>=50},
-  {id:"a_bot",ico:"🤖",name:"Robot Uprising",desc:"50 Slot Bots",c:s=>(s.gens.bot||0)>=50},
-  {id:"a_floor",ico:"🎰",name:"House Always Wins",desc:"50 Casino Floors",c:s=>(s.gens.floor||0)>=50},
-  {id:"a_g100",ico:"🏗️",name:"Empire Builder",desc:"100 of any generator",c:s=>Object.values(s.gens).some(v=>v>=100)},
-  {id:"a_alltier",ico:"🌐",name:"Diversified",desc:"Own every generator type",c:s=>GENS.every(g=>(s.gens[g.id]||0)>=1)},
+  {id:"a_cat",ico:"🐱",name:"Coin Hoarder",desc:"Coin Value to Lv 50",c:s=>(s.gens.cat||0)>=50},
+  {id:"a_bot",ico:"🤖",name:"Reel Deal",desc:"Reel Power to Lv 50",c:s=>(s.gens.bot||0)>=50},
+  {id:"a_floor",ico:"🎰",name:"House Edge",desc:"Premium Reels to Lv 50",c:s=>(s.gens.floor||0)>=50},
+  {id:"a_g100",ico:"🏗️",name:"Empire Builder",desc:"Any slot upgrade to Lv 100",c:s=>Object.values(s.gens).some(v=>v>=100)},
+  {id:"a_alltier",ico:"🌐",name:"Diversified",desc:"Buy every slot upgrade",c:s=>GENS.every(g=>(s.gens[g.id]||0)>=1)},
   {id:"a_reel4",ico:"🎟️",name:"Four on the Floor",desc:"Unlock the 4th reel",c:s=>!!s.ups.u_reel4},
   {id:"a_reel5",ico:"🖐️",name:"High Five",desc:"Unlock the 5th reel",c:s=>!!s.ups.u_reel5},
   {id:"a_grid",ico:"🎛️",name:"Off the Grid",desc:"Upgrade to a multi-row grid",c:s=>!!s.ups.u_grid3},
@@ -619,7 +619,7 @@ function jackpotBoost(){return S.ups.u_jack?2:1;}
 function megaBoost(){return S.ups.u_mega?3:1;}
 function tableLimitMult(){return slotEff('bet');}
 function globalMult(){return chipMult()*achMult()*buffMult()*starMult();}
-const BASE_RTP=1.0;
+const BASE_RTP=1.35; // reflects the player-favorable payout factors (for Auto/sec display + offline)
 function sizeFactor(){return 1+Math.log2(Math.max(1,waysCount()))*0.12;} // bigger grids → more ways → more income
 // idle income estimate per second from auto-spin. Wealth-INDEPENDENT (depends on bet+upgrades, both gated) → no runaway.
 function cps(){const bet=currentBet();const gross=bet*BASE_RTP*payMult()*sizeFactor();const net=gross-bet;return net>0?net/(autoInterval()/1000):0;}
@@ -887,8 +887,8 @@ function animateReels(grid,dur,antic){
       el.style.transform=`translateY(${finalY}px)`; // resting fallback
       el.animate([
         {transform:`translateY(${startY}px)`,filter:'blur(0px)'},
-        {transform:`translateY(${(startY+finalY)/2}px)`,filter:'blur(7px)',offset:.5},
-        {transform:`translateY(${over}px)`,filter:'blur(2px)',offset:.9},
+        {transform:`translateY(${(startY+finalY)/2}px)`,filter:'blur(3.5px)',offset:.5},
+        {transform:`translateY(${over}px)`,filter:'blur(1px)',offset:.9},
         {transform:`translateY(${finalY}px)`,filter:'blur(0px)'}
       ],{duration:d,easing:'cubic-bezier(.22,.61,.36,1)',fill:'forwards'});
     });
@@ -1262,6 +1262,7 @@ if(location.search.indexOf("reset")>=0){try{localStorage.removeItem(KEY);localSt
 function updateUI(){renderGens();if(curTab==="up")renderUps();if(curTab==="vip")renderVip();if(curTab==="stats")renderStats();updateStats();}
 function fullRender(){renderBets();renderGens();renderUps();renderPaytable();renderVip();renderAch();renderAuto();renderStats();updateStats();setupAuto();renderBuffs();}
 load();renderMachine();fullRender();renderBonusBanner();pushNews(NEWS[0]);
+if(new URLSearchParams(location.search).get("auto")){S.auto=true;renderAuto();setupAuto();} // dev: ?auto=1 auto-spins
 if(S.freeSpins>0){S.freeMult=S.freeMult||3;if(!freeTimer)freeTimer=setTimeout(pumpFreeSpins,900);}
 if(pendingOffline){const o=pendingOffline;S.coins+=o.earned;S.totalEarned+=o.earned;S.runEarned+=o.earned;
   setTimeout(()=>openModal("👋 Welcome Back!",`<p>While you were away for <b style="color:var(--gold)">${fmtTime(o.away)}</b>, your casinos earned <b style="color:var(--green)">${fmt(o.earned)} coins</b>.</p><p style="color:var(--dim)">(Offline earnings pay 50% of your full rate, capped at 8 hours.)</p>`,[{label:"Collect 💰",cls:"alt",fn:()=>{spawnFloat(o.earned);closeModal();}}]),500);}
